@@ -275,8 +275,4 @@ python3 lfi_exploiter.py -u <YOUR_TARGET_URL> -p <VULNERABLE_PARAM> --auto
 
 ---
 
-**Questions?** Read: LFI_EXPLOITER_GUIDE.md
-**Need commands?** Read: QUICK_REFERENCE.txt
-**Want theory?** Read: PHP_WRAPPERS_GUIDE.md
-
 **Ghost Ops Security** | For Authorized Testing Only
