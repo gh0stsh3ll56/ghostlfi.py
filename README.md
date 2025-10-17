@@ -1,5 +1,6 @@
 # 👻 GhostLFI - Local File Inclusion Exploitation Framework
 ## Ghost Ops Security | The ONE Tool You Need
+### https://ghostops-security.com
 
 ```
    ██████╗ ██╗  ██╗ ██████╗ ███████╗████████╗██╗     ███████╗██╗
@@ -22,7 +23,7 @@ pip3 install requests urllib3 colorama
 python3 ghostlfi.py -u http://target.com/page.php -p file --auto
 ```
 
-**Done!** GhostLFI automatically:
+GhostLFI automatically:
 1. ✅ Checks PHP configuration
 2. ✅ Tests for LFI
 3. ✅ Tests all wrappers
@@ -45,8 +46,6 @@ python3 ghostlfi.py -u http://target.com/page.php -p file --auto
 ✅ **Reverse Shell** → Auto-deployment with prompts
 ✅ **Auto-Exploit** → Smart testing order
 
-**900 lines. 40KB. ONE file. No dependencies on other tools.**
-
 ---
 
 ## 📦 What's Included
@@ -57,31 +56,6 @@ ghostlfi.py (40KB) - Everything in ONE file
   └─ READ: GHOSTLFI_GUIDE.md
 ```
 
-### 📚 **Documentation** (11 guides)
-```
-GHOSTLFI_GUIDE.md         - Complete GhostLFI guide (START HERE!)
-START_HERE.md             - Quick start for beginners
-LFI_EXPLOITER_GUIDE.md    - Alternative unified tool
-PHP_WRAPPERS_GUIDE.md     - HTB Academy techniques
-WORKFLOW_DIAGRAM.txt      - Visual flowcharts
-QUICK_REFERENCE.txt       - Command cheat sheet
-ULTIMATE_GUIDE.md         - Previous version guide
-FINAL_SUMMARY.md          - Package overview
-CHANGELOG.md              - What's new
-TOOLKIT_SUMMARY.md        - Feature comparison
-USAGE_GUIDE.md            - All tools documentation
-```
-
-### 🔧 **Alternative Tools** (Optional)
-```
-lfi_exploiter.py          - Unified tool (older version)
-file_inclusion_tool.py    - Comprehensive framework
-wrapper_generator.py      - Command generator
-payload_generator.py      - Payload creator
-advanced_wrappers.py      - Advanced module
-```
-
-**Recommendation:** Just use `ghostlfi.py` - it has everything!
 
 ---
 
@@ -214,23 +188,6 @@ ghostops@target:~$ exit                  # Exit shell
 
 ---
 
-## 🎓 HTB Academy Coverage
-
-✅ **Configuration Check** - Reads php.ini, checks settings
-✅ **expect:// Wrapper** - Direct command execution
-✅ **data:// Wrapper** - Base64 + plain text methods
-✅ **php://input Wrapper** - $_GET, $_REQUEST, direct variants
-✅ **Testing Order** - HTB Academy recommended sequence
-✅ **All Examples** - Every technique from the course
-
-**Plus Advanced Features:**
-✅ Log poisoning (Apache, Nginx)
-✅ Session poisoning (PHP sessions)
-✅ LFI bypass techniques
-✅ Integrated payload generation
-
----
-
 ## 📊 Comparison
 
 | Feature | GhostLFI | Multiple Tools |
@@ -282,22 +239,6 @@ python3 ghostlfi.py --help
 
 ---
 
-## 📖 Documentation Guide
-
-**Start Here:**
-1. **README.md** (this file) - Overview
-2. **GHOSTLFI_GUIDE.md** - Complete guide
-
-**Learn Techniques:**
-3. **PHP_WRAPPERS_GUIDE.md** - HTB Academy techniques
-4. **WORKFLOW_DIAGRAM.txt** - Visual guides
-
-**Quick Reference:**
-5. **QUICK_REFERENCE.txt** - Cheat sheet
-6. **START_HERE.md** - Beginner guide
-
----
-
 ## 🏆 Why GhostLFI?
 
 ### You Asked For:
@@ -323,7 +264,7 @@ python3 ghostlfi.py -u <TARGET> -p <PARAM> --auto
 
 ### Legal Use Only
 - ✅ Your systems
-- ✅ HTB/CTF platforms
+- ✅ CTF platforms
 - ✅ Authorized pentests (written permission)
 - ❌ Unauthorized systems
 
