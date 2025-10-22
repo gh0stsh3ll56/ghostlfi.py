@@ -38,7 +38,6 @@ GhostLFI automatically:
 
 ✅ **Payload Generation** → LFI, wrappers, shells, revshells
 ✅ **Wrapper Testing** → expect://, data://, php://input
-✅ **HTB Academy** → 100% technique coverage
 ✅ **Bypass Techniques** → Null byte, encoding, traversal
 ✅ **Log Poisoning** → Apache, Nginx automatic
 ✅ **Session Poisoning** → PHP session exploitation
@@ -248,7 +247,6 @@ python3 ghostlfi.py --help
 ✅ **ONE file** (ghostlfi.py) with everything
 ✅ **Payload generation** built-in (--generate)
 ✅ **Wrapper testing** built-in (automatic)
-✅ **All techniques** (HTB + advanced)
 ✅ **Interactive shell** with generators
 ✅ **Reverse shell** with automatic prompts
 ✅ **Professional results** for your reports
